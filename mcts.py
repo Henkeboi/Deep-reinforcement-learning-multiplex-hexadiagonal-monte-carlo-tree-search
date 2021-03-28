@@ -1,4 +1,5 @@
 from state_manager import StateManager
+import random
 import numpy as np
 
 class Node:
@@ -52,6 +53,15 @@ class Node:
                 children.append(child[0])
             return children
 
+    def get_Q(self, player1_to_move):
+        if self.num_traversed == 0:
+            if player1_to_move:
+                return np.inf
+            else:
+                return -np.inf
+        else:
+            return self.Q
+
     def update_Q(self, value):
         self.Q = self.Q + value
 
@@ -77,16 +87,7 @@ class MCT:
                 depth = depth + 1
         return parent
 
-    def backpropagate(self, leaf):
-        leaf_state = StateManager(None, None, leaf.state)
-        if leaf_state.player1_won():
-            score = 1.0
-        elif leaf_state.player2_won():
-            score = -1.0
-        else:
-            print("Error")
-            quit()
-
+    def backpropagate(self, leaf, score):
         while not leaf == None:
             leaf.update_Q(score)
             leaf = leaf.parent
@@ -94,34 +95,52 @@ class MCT:
     def run_simulations(self):
         for i in range(0, self.num_simulations):
             leaf = self.traverse_to_leaf()
-            self.backpropagate(leaf)
+            score = self.rollout(leaf)
+            self.backpropagate(leaf, score)
 
+    def rollout(self, leaf):
+        leaf_state = StateManager(None, None, leaf.state)
+        while not leaf_state.is_finished():
+            possible_moves = leaf_state.get_moves()
+            move = possible_moves[random.randint(0, len(possible_moves) - 1)]
+            leaf_state.make_move(move)
+        if leaf_state.player1_won():
+            score = 1.0
+        elif leaf_state.player2_won():
+            score = -1.0
+        else:
+            print("Rollout error")
+            quit()
+        return score
+        
     def tree_policy_select(self, parent, children):
         parent_state = StateManager(None, None, parent.state)
         if parent_state.player1_to_move():
-            max_Q = -np.inf
+            max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.Q +  np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
-                if Q > max_Q:
+                Q = child.get_Q(parent_state.player1_to_move()) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                if Q > max_Q or selected_child == None:
+                    max_Q = Q
                     selected_child = child
         else:
-            max_Q = np.inf
+            max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.Q + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
-                if Q < max_Q:
+                Q = child.get_Q(parent_state.player1_to_move()) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                if Q < max_Q or selected_child == None:
+                    max_Q = Q
                     selected_child = child
         return selected_child
 
 def main():
-    number_of_pieces = 9
-    max_removable_pieces = 2
+    number_of_pieces = 8
+    max_removable_pieces = 3
     state_manager = StateManager(number_of_pieces, max_removable_pieces)
 
     num_search_games = 1
-    num_simulations = 100
-    max_depth = 20
+    num_simulations = 10000
+    max_depth = 3
     mct = MCT(state_manager, num_search_games, num_simulations, max_depth)
     mct.run_simulations()
 
