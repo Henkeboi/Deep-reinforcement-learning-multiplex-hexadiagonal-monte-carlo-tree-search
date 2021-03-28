@@ -5,9 +5,10 @@ class StateManager:
             self._K = max_removable
             self._player1_to_move = True
         else:
-            self._N = int(string_representation[0])
-            self._K = int(string_representation[1])
-            if int(string_representation[2]):
+            list_rep = string_representation.split('.')
+            self._N = int(list_rep[0])
+            self._K = int(list_rep[1])
+            if int(list_rep[2]):
                 self._player1_to_move = True
             else:
                 self._player1_to_move = False
@@ -56,7 +57,7 @@ class StateManager:
         return self._player1_to_move
 
     def string_representation(self):
-        string_rep = str(self._N) + str(self._K)
+        string_rep = str(self._N) + '.' + str(self._K) + '.'
         if self._player1_to_move:
             string_rep = string_rep + str(1)
         else:
