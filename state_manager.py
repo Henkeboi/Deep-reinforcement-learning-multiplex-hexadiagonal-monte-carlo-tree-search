@@ -63,17 +63,6 @@ class StateManager:
         else:
             string_rep = string_rep + str(0)
         return string_rep
-
-def main():
-    state = StateManager(4, 3)
-    move = 1
-
-    state.make_move(1)
-    print(state.is_finished())
-    state.make_move(2)
-    print(state.is_finished())
-    state.make_move(1)
-    print(state.player2_won())
-   
+  
 if __name__ == '__main__':
     main()

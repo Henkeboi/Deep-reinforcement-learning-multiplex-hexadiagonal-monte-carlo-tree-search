@@ -5,8 +5,7 @@ import random
 from operator import itemgetter
 
 class MCT:
-    def __init__(self, root_state, num_search_games, num_simulations, max_depth):
-        self.root_node = Node(None, root_state.string_representation())
+    def __init__(self, num_search_games, num_simulations, max_depth):
         self.num_search_games = num_search_games
         self.num_simulations = num_simulations
         self.max_depth = max_depth
@@ -72,7 +71,8 @@ class MCT:
             score = self.rollout(leaf)
             self.backpropagate(leaf, score)
 
-    def play_game(self):
+    def play_game(self, root_state):
+        self.root_node = Node(None, root_state.string_representation())
         game_finished = False
         i = 0
         while not game_finished:

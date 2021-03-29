@@ -46,29 +46,54 @@ class NeuralActor:
             self.optimizer.zero_grad()
 
     def get_action(self, state):
+        state = np.fromstring(state, dtype=int, sep=".")
         state = torch.from_numpy(state).float()
-        label = torch.from_numpy(np.asarray(label)).float()
-        label = torch.nn.functional.softmax(label, dim=0).float()
+        nn_output = self.nn(state) # Forward pass
+        move_index = torch.argmax(nn_output.data)
+        while move_index > state[0]:
+            nn_output[move_index] = 0
+            move_index = torch.argmax(nn_output.data)
+        return move_index
 
 def main():
     max_removable_pieces = 3
-    hidden_layers = [3, 20, 30, 3] 
-    la = 0.1
-    neural_actor = NeuralActor(hidden_layers, max_removable_pieces, la)
-
-    number_of_pieces = 40
+    hidden_layers = [max_removable_pieces, 20, max_removable_pieces] 
+    la = 0.9
+    number_of_pieces = 10
     state_manager = StateManager(number_of_pieces, max_removable_pieces)
     num_search_games = 1
-    num_simulations = 100
-    max_depth = 20
+    num_simulations = 10
+    max_depth = 10
     mct = MCT(num_search_games, num_simulations, max_depth)
+
+    player1 = NeuralActor(hidden_layers, max_removable_pieces, la)
+    player2 = NeuralActor(hidden_layers, max_removable_pieces, la)
 
     for i in range(0, 100):
         mct.play_game(copy.deepcopy(state_manager))
         training_data = mct.get_training_data()
-        neural_actor.update_Q(training_data)
+        player1.update_Q(training_data)
 
-    #neural_actor.get_action(state_manager.
+    for i in range(0, 1000):
+        mct.play_game(copy.deepcopy(state_manager))
+        training_data = mct.get_training_data()
+        player2.update_Q(training_data)
+
+    while not state_manager.is_finished():
+        print(state_manager.string_representation())
+        if state_manager.player1_to_move():
+            move = state_manager.get_moves()[player1.get_action(state_manager.string_representation())]
+        elif state_manager.player2_to_move():
+            move = state_manager.get_moves()[player2.get_action(state_manager.string_representation())]
+        state_manager.make_move(move)
+        print(move)
+
+    if state_manager.player1_won():
+        print("Player1 won")
+    elif state_manager.player2_won():
+        print("Player2 won")
+        
+        
 
 
 if __name__ == '__main__':
