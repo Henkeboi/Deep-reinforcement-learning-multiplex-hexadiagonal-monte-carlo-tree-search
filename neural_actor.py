@@ -29,19 +29,18 @@ class NeuralActor:
         self.nn = Network(hidden_layers, num_max_moves)
         self.learning_rate = learning_rate
         self.loss_function = torch.nn.CrossEntropyLoss()
-        #self.loss_function = torch.nn.MSELoss()
         self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
    
     def update_Q(self, training_data):
         for i in range(0, len(training_data)):
             state, label = training_data[i]
-            state  = np.asarray(state, dtype=float)
-            state = torch.tensor(state, requires_grad=True)
-            state = state.view(1, state.shape[0])
+            state = torch.from_numpy(state).float()
+            nn_output = self.nn(state) # Forward pass
+            nn_output = nn_output.view(1, state.shape[0])
             max_val = max(label)
             index = list.index(label, max_val)
             label = torch.from_numpy(np.asarray([index]))
-            nn_loss = self.loss_function(state, label)
+            nn_loss = self.loss_function(nn_output, label)
             nn_loss.backward()
             self.optimizer.step()
             self.optimizer.zero_grad()
