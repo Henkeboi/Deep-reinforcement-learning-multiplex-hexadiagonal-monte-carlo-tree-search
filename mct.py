@@ -1,7 +1,8 @@
 from state_manager import StateManager
-import random
-import numpy as np
 from node import Node
+import numpy as np
+import random
+from operator import itemgetter
 
 class MCT:
     def __init__(self, root_state, num_search_games, num_simulations, max_depth):
@@ -29,13 +30,6 @@ class MCT:
         while not leaf == None:
             leaf.update_Q(score)
             leaf = leaf.parent
-
-    def run_simulations(self):
-        for i in range(0, self.num_simulations):
-            leaf = self.traverse_to_leaf()
-            print(self.root_node.Q)
-            score = self.rollout(leaf)
-            self.backpropagate(leaf, score)
 
     def rollout(self, leaf):
         leaf_state = StateManager(None, None, leaf.state)
@@ -72,19 +66,32 @@ class MCT:
                     selected_child = child
         return selected_child
 
-def main():
-    number_of_pieces = 15
-    max_removable_pieces = 3
-    state_manager = StateManager(number_of_pieces, max_removable_pieces)
+    def run_simulations(self):
+        for i in range(0, self.num_simulations):
+            leaf = self.traverse_to_leaf()
+            score = self.rollout(leaf)
+            self.backpropagate(leaf, score)
 
-    num_search_games = 1
-    num_simulations = 1000
-    max_depth = 15
-    mct = MCT(state_manager, num_search_games, num_simulations, max_depth)
-    mct.run_simulations()
+    def play_game(self):
+        game_finished = False
+        i = 0
+        while not game_finished:
+            self.run_simulations()
+            if len(self.root_node.children) == 0:
+                game_finished = True
+            else:
+                self.root_node = max(self.root_node.children, key=itemgetter(1))[0]
 
+    def create_tensor(self, string):
+        state = np.fromstring(string, dtype=int, sep=".")
+        return state
 
-
-if __name__ == '__main__':
-    main()
-
+    def get_training_data(self):
+        training_data = []
+        self.root_node = self.root_node.parent # The last node has no label.
+        while not self.root_node == None:
+            state = self.create_tensor(self.root_node.state)
+            label = [item[1] for item in self.root_node.children]
+            training_data.append((state, label))
+            self.root_node = self.root_node.parent
+        return training_data
