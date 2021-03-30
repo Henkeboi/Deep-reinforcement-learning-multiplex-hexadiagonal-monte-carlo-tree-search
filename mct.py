@@ -5,7 +5,8 @@ import random
 from operator import itemgetter
 
 class MCT:
-    def __init__(self, num_search_games, num_simulations, max_depth):
+    def __init__(self, nn, num_search_games, num_simulations, max_depth):
+        self.nn = nn
         self.num_search_games = num_search_games
         self.num_simulations = num_simulations
         self.max_depth = max_depth
@@ -32,9 +33,15 @@ class MCT:
 
     def rollout(self, leaf):
         leaf_state = StateManager(None, None, leaf.state)
+        first_iteration = True
         while not leaf_state.is_finished():
-            possible_moves = leaf_state.get_moves()
-            move = possible_moves[random.randint(0, len(possible_moves) - 1)]
+            if first_iteration:
+                possible_moves = leaf_state.get_moves()
+                move = possible_moves[random.randint(0, len(possible_moves) - 1)]
+                first_iteration = False
+            else:
+                possible_moves = leaf_state.get_moves()
+                move = possible_moves[self.nn.get_action(leaf_state.string_representation())]
             leaf_state.make_move(move)
         if leaf_state.player1_won():
             score = 1.0
