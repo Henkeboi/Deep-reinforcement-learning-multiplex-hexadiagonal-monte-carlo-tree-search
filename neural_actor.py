@@ -22,10 +22,12 @@ class Network(torch.nn.Module):
         return output
 
 class NeuralActor:
-    def __init__(self, hidden_layers, num_max_moves, learning_rate):
+    def __init__(self, hidden_layers, num_max_moves, learning_rate, device):
         torch.manual_seed(42)
         self.num_max_moves = num_max_moves
         self.nn = Network(hidden_layers, num_max_moves)
+        self.dev = device
+        self.nn.to(torch.device(self.dev))
         self.learning_rate = learning_rate
         self.loss_function = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
@@ -34,11 +36,13 @@ class NeuralActor:
         for i in range(0, len(training_data)):
             state, label = training_data[i]
             state = torch.from_numpy(state).float()
+            state = state.to(self.dev)
             nn_output = self.nn(state) # Forward pass
             nn_output = nn_output.view(1, self.num_max_moves)
             max_val = max(label)
             index = list.index(label, max_val)
-            label = torch.from_numpy(np.asarray([index]))
+            label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor)
+            label = label.to(self.dev)
             nn_loss = self.loss_function(nn_output, label)
             nn_loss.backward()
         self.optimizer.step()
@@ -46,7 +50,7 @@ class NeuralActor:
 
     def get_action(self, state):
         state = np.fromstring(state, dtype=int, sep=".")
-        state = torch.from_numpy(state).float()
+        state = torch.from_numpy(state).float().to(self.dev)
         nn_output = self.nn(state) # Forward pass
         move_index = torch.argmax(nn_output.data)
         print(nn_output.data)
@@ -61,22 +65,30 @@ def main():
     state_space_variables = 3
     hidden_layers = [state_space_variables, 10, max_removable_pieces] 
     la = 0.1
-    number_of_pieces = 8
+    number_of_pieces = 20
     state_manager = StateManager(number_of_pieces, max_removable_pieces)
     num_search_games = 1
     num_simulations = 20
     max_depth = 20
-    player1 = NeuralActor(hidden_layers, max_removable_pieces, la)
-    player2 = NeuralActor(hidden_layers, max_removable_pieces, la)
+
+    if torch.cuda.is_available():
+        print("Using gpu")
+        device = 'cuda:0'
+    else:
+        print("Using cpu")
+        device = 'cpu'
+
+    player1 = NeuralActor(hidden_layers, max_removable_pieces, la, device)
+    player2 = NeuralActor(hidden_layers, max_removable_pieces, la, device)
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    for i in range(0, 10000):
+    for i in range(0, 500):
         mct1.play_game(copy.deepcopy(state_manager))
         training_data = mct1.get_training_data()
         player1.update_Q(training_data)
 
-    for i in range(0, 10000):
+    for i in range(0, 500):
         mct2.play_game(copy.deepcopy(state_manager))
         training_data = mct2.get_training_data()
         player2.update_Q(training_data)
