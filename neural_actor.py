@@ -34,18 +34,23 @@ class NeuralActor:
         self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
    
     def update_Q(self, training_data):
-        for i in range(0, len(training_data)):
-            state, label = training_data[i]
-            state = torch.from_numpy(state).float()
-            state = state.to(self.dev)
-            nn_output = self.nn(state) # Forward pass
-            nn_output = nn_output.view(1, self.num_max_moves)
-            max_val = max(label)
-            index = list.index(label, max_val)
-            label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor)
-            label = label.to(self.dev)
-            nn_loss = self.loss_function(nn_output, label)
-            nn_loss.backward()
+        loss = 0
+        for epoch in range(1):
+            for i in range(0, len(training_data)):
+                state, label = training_data[i]
+                state = torch.from_numpy(state).float()
+                state = state.to(self.dev)
+                nn_output = self.nn(state) # Forward pass
+                nn_output = nn_output.view(1, self.num_max_moves)
+                max_val = max(label)
+                index = list.index(label, max_val)
+                label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor)
+                label = label.to(self.dev)
+                nn_loss = self.loss_function(nn_output, label)
+                nn_loss.backward()
+                loss += nn_loss.item()
+        print(loss / 1)
+
         self.optimizer.step()
         self.optimizer.zero_grad()
 
@@ -63,13 +68,13 @@ def main():
     board_size = 3
     max_num_moves = int(board_size ** 2)
     state_space_size = int(board_size ** 2 + 1)
-    hidden_layers = [state_space_size, 10, max_num_moves] 
-    la = 0.1
+    hidden_layers = [state_space_size, 100, max_num_moves] 
+    la = 0.01
 
     state_manager = Hex(board_size)
-    num_search_games = 1
-    num_simulations = 20
-    max_depth = 8
+    num_search_games = 10
+    num_simulations = 10
+    max_depth = 20
 
     if torch.cuda.is_available():
         print("Using gpu")
@@ -84,19 +89,17 @@ def main():
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    for i in range(0, 1000):
-        mct1.play_game(copy.deepcopy(state_manager))
-        training_data = mct1.get_training_data()
-        player1.update_Q(training_data)
-        print(i)
+    #for i in range(0, 1):
+    #    mct1.play_game(copy.deepcopy(state_manager))
+    #    training_data = mct1.get_training_data()
+    #    player1.update_Q(training_data)
 
-    for i in range(0, 1):
+    for i in range(0, 100):
         mct2.play_game(copy.deepcopy(state_manager))
         training_data = mct2.get_training_data()
         player2.update_Q(training_data)
-        print(i)
 
-    while not state_manager.is_finished():
+    while not state_manager.player1_won() and not state_manager.player2_won():
         if state_manager.player1_to_move:
             print("Player 1 moving")
             move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation()))
@@ -104,8 +107,7 @@ def main():
             print("Player 2 moving")
             move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
         state_manager.make_move(move)
-        print(move)
-        print()
+        #state_manager.show()
 
     if state_manager.player1_won():
         print("Player1 won")

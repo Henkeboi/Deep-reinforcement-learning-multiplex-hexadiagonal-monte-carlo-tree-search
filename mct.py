@@ -57,12 +57,11 @@ class MCT:
     def tree_policy_select(self, parent, children):
         size = int((len(parent.state) - 1) ** 0.5)
         parent_state = Hex(size, parent.state)
-        return children[random.randint(0, len(children) - 1)] ## DEBUG
         if parent_state.player1_to_move:
             max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.get_Q(parent_state.player1_to_move()) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                Q = child.get_Q(parent_state.player1_to_move) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
                 if Q > max_Q or selected_child == None:
                     max_Q = Q
                     selected_child = child
@@ -70,7 +69,7 @@ class MCT:
             max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.get_Q(parent_state.player1_to_move()) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                Q = child.get_Q(parent_state.player1_to_move) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
                 if Q < max_Q or selected_child == None:
                     max_Q = Q
                     selected_child = child
