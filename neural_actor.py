@@ -65,7 +65,7 @@ def main():
     state_space_variables = 3
     hidden_layers = [state_space_variables, 10, max_removable_pieces] 
     la = 0.1
-    number_of_pieces = 20
+    number_of_pieces = 8
     state_manager = StateManager(number_of_pieces, max_removable_pieces)
     num_search_games = 1
     num_simulations = 20
@@ -77,6 +77,7 @@ def main():
     else:
         print("Using cpu")
         device = 'cpu'
+    device = 'cpu'
 
     player1 = NeuralActor(hidden_layers, max_removable_pieces, la, device)
     player2 = NeuralActor(hidden_layers, max_removable_pieces, la, device)

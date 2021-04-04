@@ -1,6 +1,7 @@
-from state_manager import StateManager
+from hex import Hex
 import random
 import numpy as np
+
 
 class Node:
     def __init__(self, parent, state):
@@ -31,7 +32,8 @@ class Node:
         assert(1 == 2)
 
     def expand(self):
-        state_manager = StateManager(None, None, self.state)
+        size = int((len(self.state) - 1) ** 0.5)
+        state_manager = Hex(size, self.state)
         possible_moves = state_manager.get_moves()
         self.children = []
         for move in possible_moves:

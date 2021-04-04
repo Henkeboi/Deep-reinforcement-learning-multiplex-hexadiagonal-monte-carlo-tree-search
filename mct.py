@@ -1,8 +1,9 @@
-from state_manager import StateManager
 from node import Node
 import numpy as np
 import random
 from operator import itemgetter
+import copy
+from hex import Hex
 
 class MCT:
     def __init__(self, nn, num_search_games, num_simulations, max_depth):
@@ -32,29 +33,38 @@ class MCT:
             leaf = leaf.parent
 
     def rollout(self, leaf):
-        leaf_state = StateManager(None, None, leaf.state)
+        size = int((len(leaf.state) - 1) ** 0.5)
+        leaf_state = copy.deepcopy(Hex(size, leaf.state))
         first_iteration = True
-        while not leaf_state.is_finished():
+        while True:
+            if leaf_state.player1_won():
+                score = 1.0
+                return score
+            elif leaf_state.player2_won(): 
+                score = -1.0
+                return score
+            if leaf_state.is_finished():
+                print("No winner error")
+                print(leaf_state.player1_won())
+                print(leaf_state.player2_won())
+                quit()
+
             if first_iteration:
                 possible_moves = leaf_state.get_moves()
                 move = possible_moves[random.randint(0, len(possible_moves) - 1)]
                 first_iteration = False
             else:
-                possible_moves = leaf_state.get_moves()
-                move = possible_moves[self.nn.get_action(leaf_state.string_representation())]
+                possible_moves = leaf_state.get_moves() ## DEBUG
+                move = possible_moves[random.randint(0, len(possible_moves) - 1)] ## DEBUG
+                #possible_moves = leaf_state.get_moves()
+                #move = possible_moves[self.nn.get_action(leaf_state.string_representation())]
             leaf_state.make_move(move)
-        if leaf_state.player1_won():
-            score = 1.0
-        elif leaf_state.player2_won():
-            score = -1.0
-        else:
-            print("Rollout error")
-            quit()
-        return score
-        
+       
     def tree_policy_select(self, parent, children):
-        parent_state = StateManager(None, None, parent.state)
-        if parent_state.player1_to_move():
+        size = int((len(parent.state) - 1) ** 0.5)
+        parent_state = copy.deepcopy(Hex(size, parent.state))
+        return children[random.randint(0, len(children) - 1)] ## DEBUG
+        if parent_state.player1_to_move:
             max_Q = 0.0
             selected_child = None
             for child in children:
@@ -74,12 +84,12 @@ class MCT:
 
     def run_simulations(self):
         for i in range(0, self.num_simulations):
-            leaf = self.traverse_to_leaf()
+            leaf = copy.deepcopy(self.traverse_to_leaf())
             score = self.rollout(leaf)
             self.backpropagate(leaf, score)
 
     def play_game(self, root_state):
-        self.root_node = Node(None, root_state.string_representation())
+        self.root_node = Node(None, copy.deepcopy(root_state.string_representation()))
         game_finished = False
         i = 0
         while not game_finished:
@@ -102,3 +112,17 @@ class MCT:
             training_data.append((state, label))
             self.root_node = self.root_node.parent
         return training_data
+
+def main():
+    num_search_games = 1
+    num_simulations = 1
+    max_depth = 100
+    mct1 = MCT(None, num_search_games, num_simulations, max_depth)
+
+    state_manager = Hex(4)
+    for i in range(0, 1):
+        mct1.play_game(copy.deepcopy(state_manager))
+    
+    
+if __name__ == '__main__':
+    main()

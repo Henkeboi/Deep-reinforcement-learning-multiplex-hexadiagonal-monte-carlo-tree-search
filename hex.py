@@ -1,5 +1,6 @@
 import networkx as nx
 from matplotlib import pyplot as plt
+import copy
 
 class Cell:
     def __init__(self, value, x, y):
@@ -27,10 +28,13 @@ class Cell:
 class Hex:
     def __init__(self, size, string_rep=None):
         self.size = size 
+        self.white_won = False
+        self.black_won = False
         if string_rep == None:
             self.init_board()
         else:
             self.init_board_from_string(string_rep)
+        self.debug_flag = False
     
     def get_left(self, x, y):
         if x - 1 < 0:
@@ -129,21 +133,22 @@ class Hex:
                 elif self.board[y][x].value == 0:
                     colors.append('green')
                 elif self.board[y][x].value == 2:
-                    colors.append('blue')
+                    colors.append('black')
                 node_counter = node_counter + 1
 
         G = nx.Graph()
         G.add_nodes_from(pos.keys())
         plt.clf()
         nx.draw(G, pos, edgelist=edges, node_color=colors)
-        plt.show(block=False)
-        plt.pause(500)
+        plt.show(block=True)
+        #plt.show(block=False)
+        #plt.pause(3)
 
     def make_move(self, move):
         x = move[0]
         y = move[1]
         assert(self.board[y][x].value == 0)
-        self.player1_to_move = False ### Debug
+
         if self.player1_to_move:
             self.board[y][x].value = 1
             self.player1_to_move = False 
@@ -151,21 +156,23 @@ class Hex:
             self.board[y][x].value = 2
             self.player1_to_move = True
 
+    def undo_move(self, move):
+        x = move[0]
+        y = move[1]
+        assert(not self.board[y][x].value == 0)
+        if self.player1_to_move == False:
+            self.player1_to_move = True
+        else:
+            self.player1_to_move = False
+        self.board[y][x].value = 0
+
     def get_moves(self):
         moves = []
         for y in range(0, self.size):
             for x in range(0, self.size):
-                if self.board[y][x] == 0:
-                    moves.append(x, y)
+                if self.board[y][x].value == 0:
+                    moves.append((x, y))
         return moves
-
-    def undo_move(self, move):
-        assert(not self.board[y][x] == 0)
-        if self._player1_to_move == False:
-            self._player1_to_move = True
-        else:
-            self._player1_to_move = False
-        self.board[y][x] = 0
 
     def get_graph_index(self, x, y):
         return self.size * x + y
@@ -182,74 +189,111 @@ class Hex:
             string_rep = string_rep + str(0)
         return string_rep
 
-
-    def dfs_util(self, node, visited_nodes, color):
+    def dfs_white(self, node, visited_nodes):
         visited_nodes.append(self.get_graph_index(node.x, node.y))
-        if color == 'white':
-            for adjacent in node.get_neighbours():
-                if adjacent.value == 1:
-                    if node.x == self.size - 1:
-                        print("White won")
-                    if self.get_graph_index(adjacent.x, adjacent.y) not in visited_nodes:
-                        self.dfs_util(adjacent, visited_nodes, color)
-            
-        elif color == 'black':
-            for adjacent in node.get_neighbours():
-                if adjacent.value == 2:
-                    #print("x: " + str(node.x))
-                    #print("y: " + str(node.y))
-                    #print()
-                    if node.y == self.size - 1:
-                        print("Black won")
-                    if self.get_graph_index(adjacent.x, adjacent.y) not in visited_nodes:
-                        self.dfs_util(adjacent, visited_nodes, color)
+        for adjacent in node.get_neighbours():
+            if self.get_graph_index(adjacent.x, adjacent.y) not in visited_nodes and adjacent.value == 1:
+                if adjacent.x == self.size - 1:
+                    self.white_won = True
+                    return True
+                self.dfs_white(adjacent, visited_nodes)
+        return False
 
-    def check_if_white_won(self):
+    def player1_won(self):
         visited_nodes = []
         start_nodes = []
-        goal_nodes = []
         for y in range(self.size):
             if self.board[y][0].value == 1:
                 start_nodes.append(self.board[y][0])
-            if self.board[y][self.size - 1].value == 1:
-                goal_nodes.append(self.board[y][self.size - 1])
 
         for node in start_nodes:
             if self.get_graph_index(node.x, node.y) not in visited_nodes:
-                self.dfs_util(node, visited_nodes, 'white')
+                self.dfs_white(node, visited_nodes)
+                if self.white_won == True:
+                    return True
+        return False
 
-    def check_if_black_won(self):
-        visited_nodes = []
+    def dfs_black(self, node, visited_nodes):
+        visited_nodes.append(self.get_graph_index(node.x, node.y))
+        for adj in node.get_neighbours():
+            if self.get_graph_index(adj.x, adj.y) not in visited_nodes and adj.value == 2:
+                if adj.y == self.size - 1:
+                    self.black_won = True
+                    return True
+                self.dfs_black(adj, visited_nodes)
+        return False
+
+    def player2_won(self):
+        nodes_visited = []
         start_nodes = []
-        goal_nodes = []
         for x in range(self.size):
             if self.board[0][x].value == 2:
-                start_nodes.append(self.board[0][x])
-            if self.board[self.size - 1][x].value == 2:
-                goal_nodes.append(self.board[self.size - 1][x])
+                start_nodes.append(copy.deepcopy(self.board[0][x]))
 
         for node in start_nodes:
-            if self.get_graph_index(node.x, node.y) not in visited_nodes:
-                self.dfs_util(node, visited_nodes, 'black')
-
-    def is_finished(self):
-        self.check_if_white_won()
-        self.check_if_black_won()
+            self.dfs_black(node, nodes_visited)
+            if self.black_won == True:
+                return True
+        return False
                
+    def is_finished(self):
+        if len(self.get_moves()) == 0:
+            return True
+        else:
+            return False
+
 def main():
     hex_board = Hex(4)
+    hex_board.debug_flag = True
     rep = hex_board.string_representation()
     hex_board = Hex(hex_board.size, string_rep=rep)
     move = (0, 0)
     hex_board.make_move(move)
+    move = (1, 0)
+    hex_board.make_move(move)
+    move = (2, 0)
+    hex_board.make_move(move)
+    move = (3, 0)
+
+    hex_board.make_move(move)
+    move = (0, 1)
+    hex_board.make_move(move)
     move = (1, 1)
     hex_board.make_move(move)
+
+    move = (3, 2)
+    hex_board.make_move(move)
+    #move = (3, 1)
+    #hex_board.make_move(move)
+
+    move = (2, 1)
+    hex_board.make_move(move)
+
     move = (1, 2)
+    hex_board.make_move(move)
+    move = (0, 2)
+    hex_board.make_move(move)
+    move = (2, 2)
+    hex_board.make_move(move)
+
+    move = (3, 1)
+    hex_board.make_move(move)
+    #move = (3, 2)
+    #hex_board.make_move(move)
+
+    move = (0, 3)
+    hex_board.make_move(move)
+    move = (3, 3)
     hex_board.make_move(move)
     move = (1, 3)
     hex_board.make_move(move)
-    hex_board.is_finished()
-    hex_board.show()    
+    move = (2, 3)
+    hex_board.make_move(move)
+
+    #hex_board.show()
+    print(hex_board.player1_won())
+    print(hex_board.player2_won())
+
 
 if __name__ == '__main__':
     main()
