@@ -1,4 +1,5 @@
 from state_manager import StateManager
+from hex import Hex
 from mct import MCT
 import random
 import copy
@@ -48,28 +49,27 @@ class NeuralActor:
         self.optimizer.step()
         self.optimizer.zero_grad()
 
-    def get_action(self, state):
-        state = np.fromstring(state, dtype=int, sep=".")
+    def get_action(self, state_str):
+        state = np.fromstring(state_str, np.int8) - 48
         state = torch.from_numpy(state).float().to(self.dev)
         nn_output = self.nn(state) # Forward pass
         move_index = torch.argmax(nn_output.data)
-        print(nn_output.data)
-
-        while move_index > state[0] - 1:
-            move_index = move_index - 1 # Choose closest move
-
-        return move_index
+        while not Hex.is_legal(move_index, state_str):
+            nn_output.data[move_index] = 0.0
+            move_index = torch.argmax(nn_output.data)
+        return move_index.item()
 
 def main():
-    max_removable_pieces = 3
-    state_space_variables = 3
-    hidden_layers = [state_space_variables, 10, max_removable_pieces] 
+    board_size = 3
+    max_num_moves = int(board_size ** 2)
+    state_space_size = int(board_size ** 2 + 1)
+    hidden_layers = [state_space_size, 10, max_num_moves] 
     la = 0.1
-    number_of_pieces = 8
-    state_manager = StateManager(number_of_pieces, max_removable_pieces)
+
+    state_manager = Hex(board_size)
     num_search_games = 1
     num_simulations = 20
-    max_depth = 20
+    max_depth = 8
 
     if torch.cuda.is_available():
         print("Using gpu")
@@ -79,28 +79,30 @@ def main():
         device = 'cpu'
     device = 'cpu'
 
-    player1 = NeuralActor(hidden_layers, max_removable_pieces, la, device)
-    player2 = NeuralActor(hidden_layers, max_removable_pieces, la, device)
+    player1 = NeuralActor(hidden_layers, max_num_moves, la, device)
+    player2 = NeuralActor(hidden_layers, max_num_moves, la, device)
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    for i in range(0, 500):
+    for i in range(0, 1000):
         mct1.play_game(copy.deepcopy(state_manager))
         training_data = mct1.get_training_data()
         player1.update_Q(training_data)
+        print(i)
 
-    for i in range(0, 500):
+    for i in range(0, 1):
         mct2.play_game(copy.deepcopy(state_manager))
         training_data = mct2.get_training_data()
         player2.update_Q(training_data)
+        print(i)
 
     while not state_manager.is_finished():
-        if state_manager.player1_to_move():
+        if state_manager.player1_to_move:
             print("Player 1 moving")
-            move = state_manager.get_moves()[player1.get_action(state_manager.string_representation())]
-        elif state_manager.player2_to_move():
+            move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation()))
+        else:
             print("Player 2 moving")
-            move = state_manager.get_moves()[player2.get_action(state_manager.string_representation())]
+            move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
         state_manager.make_move(move)
         print(move)
         print()

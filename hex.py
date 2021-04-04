@@ -36,12 +36,6 @@ class Hex:
             self.init_board_from_string(string_rep)
         self.debug_flag = False
     
-    def get_left(self, x, y):
-        if x - 1 < 0:
-            return None
-        else:
-            return self.board[y][x - 1]
-
     def get_upper_left(self, x, y):
         if y + 1 >= self.size:
             return None
@@ -59,18 +53,6 @@ class Hex:
             return None
         else:
             return self.board[y][x + 1]
-
-    def get_lower_right(self, x, y):
-        if x + 1 >= self.size or y - 1 < 0:
-            return None
-        else:
-            return self.board[y - 1][x + 1]
-
-    def get_lower_left(self, x, y):
-        if x - 1 < 0 or y - 1 < 0:
-            return None
-        else:
-            return self.board[y - 1][x - 1]
 
     def init_board(self):
         self.player1_to_move = True
@@ -228,7 +210,7 @@ class Hex:
         start_nodes = []
         for x in range(self.size):
             if self.board[0][x].value == 2:
-                start_nodes.append(copy.deepcopy(self.board[0][x]))
+                start_nodes.append(self.board[0][x])
 
         for node in start_nodes:
             self.dfs_black(node, nodes_visited)
@@ -241,6 +223,22 @@ class Hex:
             return True
         else:
             return False
+
+    @staticmethod
+    def is_legal(move, state):
+        if state[move] == str(0):
+            return True
+        return False
+       
+    def convert_to_move(self, index):
+        x = 0
+        y = 0
+        for i in range(index):
+            x = x + 1
+            if (x % self.size) == 0:
+                y = y + 1
+                x = 0
+        return (x, y)
 
 def main():
     hex_board = Hex(4)
