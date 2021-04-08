@@ -30,7 +30,7 @@ class NeuralActor:
         self.dev = device
         self.nn.to(torch.device(self.dev))
         self.learning_rate = learning_rate
-        self.loss_function = torch.nn.CrossEntropyLoss()
+        self.loss_function = torch.nn.MSELoss() #torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
    
     def update_Q(self, training_data):
@@ -44,7 +44,8 @@ class NeuralActor:
                 nn_output = nn_output.view(1, self.num_max_moves)
                 max_val = max(label)
                 index = list.index(label, max_val)
-                label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor)
+                #label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor) Entropyloss
+                label = torch.from_numpy(np.asarray([index])).type(torch.FloatTensor)
                 label = label.to(self.dev)
                 nn_loss = self.loss_function(nn_output, label)
                 nn_loss.backward()
@@ -73,7 +74,7 @@ def main():
 
     state_manager = Hex(board_size)
     num_search_games = 10
-    num_simulations = 10
+    num_simulations = 1
     max_depth = 20
 
     if torch.cuda.is_available():
@@ -89,12 +90,12 @@ def main():
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    #for i in range(0, 1):
-    #    mct1.play_game(copy.deepcopy(state_manager))
-    #    training_data = mct1.get_training_data()
-    #    player1.update_Q(training_data)
+    for i in range(0, 1):
+        mct1.play_game(copy.deepcopy(state_manager))
+        training_data = mct1.get_training_data()
+        player1.update_Q(training_data)
 
-    for i in range(0, 100):
+    for i in range(0, 1000):
         mct2.play_game(copy.deepcopy(state_manager))
         training_data = mct2.get_training_data()
         player2.update_Q(training_data)
@@ -107,7 +108,7 @@ def main():
             print("Player 2 moving")
             move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
         state_manager.make_move(move)
-        #state_manager.show()
+        state_manager.show()
 
     if state_manager.player1_won():
         print("Player1 won")
