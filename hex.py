@@ -107,6 +107,8 @@ class Hex:
             for y in range(0, self.size):
                 pos_x = x - 0.5 * y
                 pos_y = y
+                #pos_x = (x + y) / (2 ** 0.5)
+                #pos_y = (y - x) / (2 ** 0.5)
                 pos[node_counter] = (pos_x, pos_y)
                 for neighbour in self.board[y][x].get_neighbours():
                     edges.append((node_counter, self.get_graph_index(neighbour.x, neighbour.y)))
@@ -175,18 +177,29 @@ class Hex:
         visited_nodes.append(self.get_graph_index(node.x, node.y))
         for adjacent in node.get_neighbours():
             if self.get_graph_index(adjacent.x, adjacent.y) not in visited_nodes and adjacent.value == 1:
-                if adjacent.x == self.size - 1:
+                if adjacent.y == self.size - 1:
                     self.white_won = True
                     return True
                 self.dfs_white(adjacent, visited_nodes)
         return False
 
+    def dfs_black(self, node, visited_nodes):
+        visited_nodes.append(self.get_graph_index(node.x, node.y))
+        for adj in node.get_neighbours():
+            if self.get_graph_index(adj.x, adj.y) not in visited_nodes and adj.value == 2:
+                if adj.x == self.size - 1:
+                    self.black_won = True
+                    return True
+                self.dfs_black(adj, visited_nodes)
+        return False
+
+
     def player1_won(self):
         visited_nodes = []
         start_nodes = []
-        for y in range(self.size):
-            if self.board[y][0].value == 1:
-                start_nodes.append(self.board[y][0])
+        for x in range(self.size):
+            if self.board[0][x].value == 1:
+                start_nodes.append(self.board[0][x])
 
         for node in start_nodes:
             if self.get_graph_index(node.x, node.y) not in visited_nodes:
@@ -195,22 +208,12 @@ class Hex:
                     return True
         return False
 
-    def dfs_black(self, node, visited_nodes):
-        visited_nodes.append(self.get_graph_index(node.x, node.y))
-        for adj in node.get_neighbours():
-            if self.get_graph_index(adj.x, adj.y) not in visited_nodes and adj.value == 2:
-                if adj.y == self.size - 1:
-                    self.black_won = True
-                    return True
-                self.dfs_black(adj, visited_nodes)
-        return False
-
     def player2_won(self):
         nodes_visited = []
         start_nodes = []
-        for x in range(self.size):
-            if self.board[0][x].value == 2:
-                start_nodes.append(self.board[0][x])
+        for y in range(self.size):
+            if self.board[y][0].value == 2:
+                start_nodes.append(self.board[y][0])
 
         for node in start_nodes:
             self.dfs_black(node, nodes_visited)

@@ -21,10 +21,16 @@ class MCT:
             if len(children) == 0:
                 reached_final_state = True
             else:
-                selected_child = self.tree_policy_select(parent, children)
-                parent.update_edge(selected_child.state)
-                parent = selected_child
-                depth = depth + 1
+                if depth == 0: # Todo: Intergrate into tree policy
+                    selected_child = children[random.randrange(0, len(children))]
+                    parent.update_edge(selected_child.state)
+                    parent = selected_child
+                    depth = depth + 1
+                else:
+                    selected_child = self.tree_policy_select(parent, children)
+                    parent.update_edge(selected_child.state)
+                    parent = selected_child
+                    depth = depth + 1
         return parent
 
     def backpropagate(self, leaf, score):

@@ -6,6 +6,7 @@ import copy
 import operator
 import torch
 import numpy as np
+import matplotlib.pyplot as plt
 
 class Network(torch.nn.Module):
     def __init__(self, hidden_layers, output_size):
@@ -13,7 +14,9 @@ class Network(torch.nn.Module):
         self.layers = torch.nn.ModuleList()
         for i in range(0, len(hidden_layers) - 1):
             input_size = hidden_layers[i]
-            self.layers.append(torch.nn.Linear(input_size, hidden_layers[i + 1]))
+            layer = torch.nn.Linear(input_size, hidden_layers[i + 1])
+            #layer.weight.data.fill_(0.001)
+            self.layers.append(layer)
 
     def forward(self, tensor):
         output = None
@@ -21,6 +24,7 @@ class Network(torch.nn.Module):
             tensor = torch.relu(layer(tensor))
         output = torch.nn.functional.softmax(tensor, dim=0)
         return output
+        
 
 class NeuralActor:
     def __init__(self, hidden_layers, num_max_moves, learning_rate, device):
@@ -31,6 +35,7 @@ class NeuralActor:
         self.nn.to(torch.device(self.dev))
         self.learning_rate = learning_rate
         self.loss_function = torch.nn.MSELoss() #torch.nn.CrossEntropyLoss()
+        #self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate, weight_decay=1e-2)
         self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
    
     def update_Q(self, training_data):
@@ -42,18 +47,22 @@ class NeuralActor:
                 state = state.to(self.dev)
                 nn_output = self.nn(state) # Forward pass
                 nn_output = nn_output.view(1, self.num_max_moves)
-                max_val = max(label)
-                index = list.index(label, max_val)
+                #print(nn_output.data)
+                #print()
+                #print()
+                index = [x /sum(label) for x in label]
                 #label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor) Entropyloss
                 label = torch.from_numpy(np.asarray([index])).type(torch.FloatTensor)
                 label = label.to(self.dev)
                 nn_loss = self.loss_function(nn_output, label)
                 nn_loss.backward()
                 loss += nn_loss.item()
-        print(loss / 1)
+        #print(nn_output.data)
+        #print(loss)
 
         self.optimizer.step()
         self.optimizer.zero_grad()
+        return loss
 
     def get_action(self, state_str):
         state = np.fromstring(state_str, np.int8) - 48
@@ -65,16 +74,22 @@ class NeuralActor:
             move_index = torch.argmax(nn_output.data)
         return move_index.item()
 
+    def store_model(self, name):
+        torch.save(self.nn.state_dict(), 'data/' + name + '.pth')
+
+    def load_model(self, name):
+        self.nn.load_state_dict(torch.load('data/' + name + '.pth'))
+
 def main():
     board_size = 3
     max_num_moves = int(board_size ** 2)
     state_space_size = int(board_size ** 2 + 1)
     hidden_layers = [state_space_size, 100, max_num_moves] 
-    la = 0.01
+    la = 0.1
 
     state_manager = Hex(board_size)
     num_search_games = 10
-    num_simulations = 1
+    num_simulations = 20
     max_depth = 20
 
     if torch.cuda.is_available():
@@ -90,22 +105,26 @@ def main():
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    for i in range(0, 1):
-        mct1.play_game(copy.deepcopy(state_manager))
-        training_data = mct1.get_training_data()
-        player1.update_Q(training_data)
+    #for i in range(0, 1):
+    #    mct1.play_game(copy.deepcopy(state_manager))
+    #    training_data = mct1.get_training_data()
+    #    player1.update_Q(training_data)
 
-    for i in range(0, 1000):
+    losses = []
+    for i in range(0, 10000):
         mct2.play_game(copy.deepcopy(state_manager))
         training_data = mct2.get_training_data()
-        player2.update_Q(training_data)
+        loss = player2.update_Q(training_data)
+        losses.append(loss)
+    plt.plot(losses)
+    plt.show()
 
     while not state_manager.player1_won() and not state_manager.player2_won():
         if state_manager.player1_to_move:
-            print("Player 1 moving")
+            print("Player 1 moved")
             move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation()))
         else:
-            print("Player 2 moving")
+            print("Player 2 moved")
             move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
         state_manager.make_move(move)
         state_manager.show()
@@ -114,9 +133,6 @@ def main():
         print("Player1 won")
     elif state_manager.player2_won():
         print("Player2 won")
-        
-        
-
 
 if __name__ == '__main__':
     main()
