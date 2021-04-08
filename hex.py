@@ -170,8 +170,15 @@ class Hex:
         if self.player1_to_move == True:
             string_rep = string_rep + str(1)
         else:
-            string_rep = string_rep + str(0)
+            string_rep = string_rep + str(2)
         return string_rep
+
+    def convert_state(self, state_tuple): # Needs only to move the turn indicator to the back
+        state_str = ''
+        for i in range(len(state_tuple) - 1):
+            state_str += str(state_tuple[i + 1])
+        state_str += str(state_tuple[0])
+        return state_str
 
     def dfs_white(self, node, visited_nodes):
         visited_nodes.append(self.get_graph_index(node.x, node.y))

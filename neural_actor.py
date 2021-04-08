@@ -1,4 +1,3 @@
-from state_manager import StateManager
 from hex import Hex
 from mct import MCT
 import random
@@ -15,7 +14,6 @@ class Network(torch.nn.Module):
         for i in range(0, len(hidden_layers) - 1):
             input_size = hidden_layers[i]
             layer = torch.nn.Linear(input_size, hidden_layers[i + 1])
-            #layer.weight.data.fill_(0.001)
             self.layers.append(layer)
 
     def forward(self, tensor):
@@ -34,8 +32,7 @@ class NeuralActor:
         self.dev = device
         self.nn.to(torch.device(self.dev))
         self.learning_rate = learning_rate
-        self.loss_function = torch.nn.MSELoss() #torch.nn.CrossEntropyLoss()
-        #self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate, weight_decay=1e-2)
+        self.loss_function = torch.nn.MSELoss() 
         self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
    
     def update_Q(self, training_data):
@@ -47,18 +44,12 @@ class NeuralActor:
                 state = state.to(self.dev)
                 nn_output = self.nn(state) # Forward pass
                 nn_output = nn_output.view(1, self.num_max_moves)
-                #print(nn_output.data)
-                #print()
-                #print()
-                index = [x /sum(label) for x in label]
-                #label = torch.from_numpy(np.asarray([index])).type(torch.LongTensor) Entropyloss
+                index = [x / sum(label) for x in label]
                 label = torch.from_numpy(np.asarray([index])).type(torch.FloatTensor)
                 label = label.to(self.dev)
                 nn_loss = self.loss_function(nn_output, label)
                 nn_loss.backward()
                 loss += nn_loss.item()
-        #print(nn_output.data)
-        #print(loss)
 
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -88,7 +79,7 @@ def main():
     la = 0.1
 
     state_manager = Hex(board_size)
-    num_search_games = 10
+    num_search_games = 1
     num_simulations = 20
     max_depth = 20
 
@@ -110,14 +101,17 @@ def main():
     #    training_data = mct1.get_training_data()
     #    player1.update_Q(training_data)
 
-    losses = []
-    for i in range(0, 10000):
-        mct2.play_game(copy.deepcopy(state_manager))
-        training_data = mct2.get_training_data()
-        loss = player2.update_Q(training_data)
-        losses.append(loss)
-    plt.plot(losses)
-    plt.show()
+    #losses = []
+    #for i in range(0, 10000):
+    #    mct2.play_game(copy.deepcopy(state_manager))
+    #    training_data = mct2.get_training_data()
+    #    loss = player2.update_Q(training_data)
+    #    losses.append(loss)
+    #    print(str(i) + " " +  str(loss))
+    player2.load_model('player2')
+    #player2.store_model('player2')
+    #plt.plot(losses)
+    #plt.show()
 
     while not state_manager.player1_won() and not state_manager.player2_won():
         if state_manager.player1_to_move:
