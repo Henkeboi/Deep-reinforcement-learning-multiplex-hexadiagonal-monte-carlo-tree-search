@@ -23,7 +23,6 @@ class Network(torch.nn.Module):
         #output = torch.nn.functional.softmax(tensor, dim=0)
         output = torch.tanh(tensor)
         return output
-        
 
 class NeuralActor:
     def __init__(self, hidden_layers, num_max_moves, learning_rate, device):
@@ -97,13 +96,13 @@ def main():
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    #for i in range(0, 1):
-    #    mct1.play_game(copy.deepcopy(state_manager))
-    #    training_data = mct1.get_training_data()
-    #    player1.update_Q(training_data)
+    for i in range(0, 1):
+        mct1.play_game(copy.deepcopy(state_manager))
+        training_data = mct1.get_training_data()
+        player1.update_Q(training_data)
 
     #losses = []
-    #for i in range(0, 300):
+    #for i in range(0, 1000):
     #    mct2.play_game(copy.deepcopy(state_manager))
     #    training_data = mct2.get_training_data()
     #    loss = player2.update_Q(training_data)
@@ -116,21 +115,21 @@ def main():
 
     win1 = 0
     win2 = 0
-    for i in range(0, 10000):
+    for i in range(0, 1000):
         state_manager = Hex(board_size)
         while not state_manager.player1_won() and not state_manager.player2_won():
             if not state_manager.player1_to_move:
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                move = state_manager.convert_to_move(move_index)
-                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                #move = state_manager.convert_to_move(move_index)
+                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             else:
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
                 move = state_manager.convert_to_move(move_index)
-                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             state_manager.make_move(move)
             #state_manager.show()
         if state_manager.player1_won():
