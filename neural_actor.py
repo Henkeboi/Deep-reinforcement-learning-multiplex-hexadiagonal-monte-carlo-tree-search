@@ -72,15 +72,16 @@ class NeuralActor:
         self.nn.load_state_dict(torch.load('data/' + name + '.pth'))
 
 def main():
-    board_size = 4
+    board_size = 6
     max_num_moves = int(board_size ** 2)
     state_space_size = int(board_size ** 2 + 1)
-    hidden_layers = [state_space_size, 64, 64, max_num_moves] 
-    la = 0.006
+    #hidden_layers = [state_space_size, 64, 64, max_num_moves] 
+    hidden_layers = [state_space_size, 100, 100, max_num_moves] 
+    la = 0.01
 
     state_manager = Hex(board_size)
     num_search_games = 1
-    num_simulations = 200
+    num_simulations = 600
     max_depth = 1000000
 
     if torch.cuda.is_available():
@@ -96,19 +97,24 @@ def main():
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    for i in range(0, 1):
-        mct1.play_game(copy.deepcopy(state_manager))
-        training_data = mct1.get_training_data()
-        player1.update_Q(training_data)
+    #for i in range(0, 1):
+    #    mct1.play_game(copy.deepcopy(state_manager))
+    #    training_data = mct1.get_training_data()
+    #    player1.update_Q(training_data)
 
     #losses = []
-    #for i in range(0, 1000):
+    #model_counter = 0
+    #for i in range(0, 10000):
+    #    if i % 100 == 0:
+    #        player2.store_model('player2' + str(model_counter))
+    #        model_counter += 1
     #    mct2.play_game(copy.deepcopy(state_manager))
     #    training_data = mct2.get_training_data()
     #    loss = player2.update_Q(training_data)
     #    losses.append(loss)
     #    print(str(i) + " " +  str(loss))
-    player2.load_model('player2')
+    #player2.store_model('player2' + str(model_counter))
+    player2.load_model('36.1')
     #player2.store_model('player2')
     #plt.plot(losses)
     #plt.show()
@@ -122,14 +128,14 @@ def main():
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                #move = state_manager.convert_to_move(move_index)
-                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                move = state_manager.convert_to_move(move_index)
+                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             else:
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                move = state_manager.convert_to_move(move_index)
-                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                #move = state_manager.convert_to_move(move_index)
+                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             state_manager.make_move(move)
             #state_manager.show()
         if state_manager.player1_won():
