@@ -20,9 +20,9 @@ class Network(torch.nn.Module):
         output = None
         for i, layer in enumerate(self.layers):
             tensor = torch.relu(layer(tensor))
-        output = torch.nn.functional.softmax(tensor, dim=0)
+        #output = torch.nn.functional.softmax(tensor, dim=0)
+        output = torch.tanh(tensor)
         return output
-        
 
 class NeuralActor:
     def __init__(self, hidden_layers, num_max_moves, learning_rate, device):
@@ -61,7 +61,7 @@ class NeuralActor:
         nn_output = self.nn(state) # Forward pass
         move_index = torch.argmax(nn_output.data)
         while not Hex.is_legal(move_index, state_str):
-            nn_output.data[move_index] = 0.0
+            nn_output.data[move_index] = -1.0
             move_index = torch.argmax(nn_output.data)
         return move_index.item()
 
@@ -72,16 +72,17 @@ class NeuralActor:
         self.nn.load_state_dict(torch.load('data/' + name + '.pth'))
 
 def main():
-    board_size = 3
+    board_size = 6
     max_num_moves = int(board_size ** 2)
     state_space_size = int(board_size ** 2 + 1)
-    hidden_layers = [state_space_size, 100, max_num_moves] 
-    la = 0.1
+    #hidden_layers = [state_space_size, 64, 64, max_num_moves] 
+    hidden_layers = [state_space_size, 100, 100, max_num_moves] 
+    la = 0.01
 
     state_manager = Hex(board_size)
     num_search_games = 1
-    num_simulations = 20
-    max_depth = 20
+    num_simulations = 600
+    max_depth = 1000000
 
     if torch.cuda.is_available():
         print("Using gpu")
@@ -102,31 +103,55 @@ def main():
     #    player1.update_Q(training_data)
 
     #losses = []
+    #model_counter = 0
     #for i in range(0, 10000):
+    #    if i % 100 == 0:
+    #        player2.store_model('player2' + str(model_counter))
+    #        model_counter += 1
     #    mct2.play_game(copy.deepcopy(state_manager))
     #    training_data = mct2.get_training_data()
     #    loss = player2.update_Q(training_data)
     #    losses.append(loss)
     #    print(str(i) + " " +  str(loss))
-    player2.load_model('player2')
+    #player2.store_model('player2' + str(model_counter))
+    player2.load_model('36.1')
     #player2.store_model('player2')
     #plt.plot(losses)
     #plt.show()
 
-    while not state_manager.player1_won() and not state_manager.player2_won():
-        if state_manager.player1_to_move:
-            print("Player 1 moved")
-            move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation()))
+    win1 = 0
+    win2 = 0
+    for i in range(0, 1000):
+        state_manager = Hex(board_size)
+        while not state_manager.player1_won() and not state_manager.player2_won():
+            if not state_manager.player1_to_move:
+                move_index = random.randrange(0, board_size ** 2)
+                while not Hex.is_legal(move_index, state_manager.string_representation()):
+                   move_index = random.randrange(0, board_size ** 2)
+                #move = state_manager.convert_to_move(move_index)
+                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+            else:
+                move_index = random.randrange(0, board_size ** 2)
+                while not Hex.is_legal(move_index, state_manager.string_representation()):
+                   move_index = random.randrange(0, board_size ** 2)
+                move = state_manager.convert_to_move(move_index)
+                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+            state_manager.make_move(move)
+            #state_manager.show()
+        if state_manager.player1_won():
+            win1 += 1
+        elif state_manager.player2_won():
+            win2 += 1
         else:
-            print("Player 2 moved")
-            move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
-        state_manager.make_move(move)
-        state_manager.show()
+            print("No winner")
 
-    if state_manager.player1_won():
-        print("Player1 won")
-    elif state_manager.player2_won():
-        print("Player2 won")
+    print("Times player 1 won: " + str(win1) + ". " + "Times player2 won: " + str(win2))
+
+    #state_manager.show()
+    #if state_manager.player1_won():
+    #    print("Player1 won")
+    #elif state_manager.player2_won():
+    #    print("Player2 won")
 
 if __name__ == '__main__':
     main()
