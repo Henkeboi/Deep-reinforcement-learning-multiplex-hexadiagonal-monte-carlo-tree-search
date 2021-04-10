@@ -128,14 +128,14 @@ def main():
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                move = state_manager.convert_to_move(move_index)
-                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                #move = state_manager.convert_to_move(move_index)
+                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             else:
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                #move = state_manager.convert_to_move(move_index)
-                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                move = state_manager.convert_to_move(move_index)
+                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             state_manager.make_move(move)
             #state_manager.show()
         if state_manager.player1_won():
