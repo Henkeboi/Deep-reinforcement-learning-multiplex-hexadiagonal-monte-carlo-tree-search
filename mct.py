@@ -3,34 +3,26 @@ import numpy as np
 import random
 from operator import itemgetter
 import copy
-from hex import Hex
+from state_manager import StateManager
+from functools import lru_cache
 
 class MCT:
-    def __init__(self, nn, num_search_games, num_simulations, max_depth):
+    def __init__(self, nn, num_search_games, num_simulations):
         self.nn = nn
         self.num_search_games = num_search_games
         self.num_simulations = num_simulations
-        self.max_depth = max_depth
 
     def traverse_to_leaf(self):
-        parent = self.root_node
-        depth = 0
-        reached_final_state = False
-        while depth < self.max_depth and not reached_final_state:
+        parent, reached_leaf, first_iteration = self.root_node, False, True
+        while not reached_leaf:
             children = parent.get_children()
             if len(children) == 0:
-                reached_final_state = True
+                reached_leaf = True
             else:
-                if depth == 0: # Todo: Intergrate into tree policy
-                    selected_child = children[random.randrange(0, len(children))]
-                    parent.update_edge(selected_child.state)
-                    parent = selected_child
-                    depth = depth + 1
-                else:
-                    selected_child = self.tree_policy_select(parent, children)
-                    parent.update_edge(selected_child.state)
-                    parent = selected_child
-                    depth = depth + 1
+                selected_child = self.tree_policy_select(parent, children, first_iteration)
+                parent.update_edge(selected_child.state)
+                parent = selected_child
+                first_iteration = False
         return parent
 
     def backpropagate(self, leaf, score):
@@ -38,10 +30,10 @@ class MCT:
             leaf.update_Q(score)
             leaf = leaf.parent
 
+    @lru_cache()
     def rollout(self, leaf):
         size = int((len(leaf.state) - 1) ** 0.5)
-        leaf_state = Hex(size, leaf.state)
-        first_iteration = True
+        leaf_state, first_iteration = Hex(size, leaf.state), True
         while True:
             if leaf_state.player1_won():
                 score = 1.0
@@ -60,7 +52,11 @@ class MCT:
                 move = leaf_state.convert_to_move(self.nn.get_action(leaf_state.string_representation()))
             leaf_state.make_move(move)
        
-    def tree_policy_select(self, parent, children):
+    def tree_policy_select(self, parent, children, is_first_iteration):
+        if is_first_iteration:
+            selected_child = children[random.randrange(0, len(children))]
+            return selected_child
+
         size = int((len(parent.state) - 1) ** 0.5)
         parent_state = Hex(size, parent.state)
         if parent_state.player1_to_move:

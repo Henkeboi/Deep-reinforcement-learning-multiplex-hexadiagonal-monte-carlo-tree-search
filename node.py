@@ -1,4 +1,4 @@
-from hex import Hex
+from state_manager import StateManager
 import random
 import numpy as np
 
@@ -21,7 +21,7 @@ class Node:
             if child[0].state == child_state:
                 self.children[i] = (self.children[i][0], self.children[i][1] + 1)
                 return
-        assert(1 == 2)
+        print("Error")
 
     def num_traversed_edge(self, child_state):
         if self.children == None:
@@ -33,7 +33,7 @@ class Node:
 
     def expand(self):
         size = int((len(self.state) - 1) ** 0.5)
-        state_manager = Hex(size, self.state)
+        state_manager = StateManager(size, self.state)
         possible_moves = state_manager.get_moves()
         self.children = []
         for move in possible_moves:
@@ -43,17 +43,9 @@ class Node:
 
     def get_children(self):
         self.num_traversed = self.num_traversed + 1
-        if self.is_expanded():
-            children = []
-            for child in self.children:
-                children.append(child[0])
-            return children
-        else:
+        if not self.is_expanded():
             self.expand()
-            children = []
-            for child in self.children:
-                children.append(child[0])
-            return children
+        return [child[0] for child in self.children]
 
     def get_Q(self, player1_to_move):
         if self.num_traversed == 0:

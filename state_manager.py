@@ -19,13 +19,13 @@ class Cell:
             return False
 
     def add_neighbour(self, cell):
-        assert(not cell == None)
-        assert(not self == cell)
+        #assert(not cell == None)
+        #assert(not self == cell)
         self.adjacent.append(cell)
         if not cell.has_neighbour(self):
             cell.add_neighbour(self)
 
-class Hex:
+class StateManager:
     def __init__(self, size, string_rep=None):
         self.size = size 
         self.white_won = False
@@ -83,9 +83,7 @@ class Hex:
         for y in range(self.size):
             self.board.append([])
             for x in range(self.size):
-                value = int(string_rep[string_index])
-                cell = Cell(value, x, y)
-                self.board[y].append(cell)
+                self.board[y].append(Cell(int(string_rep[string_index]), x, y))
                 string_index = string_index + 1
 
         for y in range(self.size):
@@ -98,10 +96,7 @@ class Hex:
                     self.board[y][x].add_neighbour(cell)
 
     def show(self):
-        node_counter = 0
-        pos = {}
-        edges = []
-        colors = []
+        node_counter, pos, edges, colors = 0, {}, [], []
 
         for x in range(0, self.size):
             for y in range(0, self.size):
@@ -129,26 +124,20 @@ class Hex:
         #plt.pause(3)
 
     def make_move(self, move):
-        x = move[0]
-        y = move[1]
-        assert(self.board[y][x].value == 0)
+        x, y = move[0], move[1]
+        #assert(self.board[y][x].value == 0)
 
         if self.player1_to_move:
             self.board[y][x].value = 1
-            self.player1_to_move = False 
         else:
             self.board[y][x].value = 2
-            self.player1_to_move = True
+        self.player1_to_move = not self.player1_to_move
 
     def undo_move(self, move):
-        x = move[0]
-        y = move[1]
-        assert(not self.board[y][x].value == 0)
-        if self.player1_to_move == False:
-            self.player1_to_move = True
-        else:
-            self.player1_to_move = False
+        x, y = move[0], move[1]
+        #assert(not self.board[y][x].value == 0)
         self.board[y][x].value = 0
+        self.player1_to_move = not self.player1_to_move
 
     def get_moves(self):
         moves = []
@@ -162,22 +151,20 @@ class Hex:
         return self.size * x + y
 
     def string_representation(self):
-        string_rep = ''
-        for y in range(self.size):
-            for x in range(self.size):
-                string_rep = string_rep + str(self.board[y][x].value)
-
+        string_rep = [str(val.value) for row in self.board for val in row]
+        string_rep = ''.join(string_rep)
+        
         if self.player1_to_move == True:
-            string_rep = string_rep + str(1)
+            string_rep = ''.join([string_rep, str(1)])
         else:
-            string_rep = string_rep + str(2)
+            string_rep = ''.join([string_rep, str(2)])
         return string_rep
 
     def convert_state(self, state_tuple): # Needs only to move the turn indicator to the back
         state_str = ''
         for i in range(len(state_tuple) - 1):
-            state_str += str(state_tuple[i + 1])
-        state_str += str(state_tuple[0])
+            state_str = ''.join([state_string, str(state_tuple[i + 1])])
+        state_str = ''.join([state_string, str(state_tuple[0])])
         return state_str
 
     def dfs_white(self, node, visited_nodes):
@@ -200,13 +187,10 @@ class Hex:
                 self.dfs_black(adj, visited_nodes)
         return False
 
-
     def player1_won(self):
-        visited_nodes = []
-        start_nodes = []
-        for x in range(self.size):
-            if self.board[0][x].value == 1:
-                start_nodes.append(self.board[0][x])
+        visited_nodes, start_nodes = [], []
+        def is_start_node(node) : return node.value == 1
+        start_nodes = [node for node in self.board[0] if is_start_node(node)]
 
         for node in start_nodes:
             if self.get_graph_index(node.x, node.y) not in visited_nodes:
@@ -216,11 +200,9 @@ class Hex:
         return False
 
     def player2_won(self):
-        nodes_visited = []
-        start_nodes = []
-        for y in range(self.size):
-            if self.board[y][0].value == 2:
-                start_nodes.append(self.board[y][0])
+        nodes_visited, start_nodes = [], []
+        def is_start_node(node) : return node.value == 2
+        start_nodes = [node[0] for node in self.board if is_start_node(node[0])]
 
         for node in start_nodes:
             self.dfs_black(node, nodes_visited)
@@ -241,67 +223,10 @@ class Hex:
         return False
        
     def convert_to_move(self, index):
-        x = 0
-        y = 0
+        x, y = 0, 0
         for i in range(index):
             x = x + 1
             if (x % self.size) == 0:
                 y = y + 1
                 x = 0
         return (x, y)
-
-def main():
-    hex_board = Hex(4)
-    hex_board.debug_flag = True
-    rep = hex_board.string_representation()
-    hex_board = Hex(hex_board.size, string_rep=rep)
-    move = (0, 0)
-    hex_board.make_move(move)
-    move = (1, 0)
-    hex_board.make_move(move)
-    move = (2, 0)
-    hex_board.make_move(move)
-    move = (3, 0)
-
-    hex_board.make_move(move)
-    move = (0, 1)
-    hex_board.make_move(move)
-    move = (1, 1)
-    hex_board.make_move(move)
-
-    move = (3, 2)
-    hex_board.make_move(move)
-    #move = (3, 1)
-    #hex_board.make_move(move)
-
-    move = (2, 1)
-    hex_board.make_move(move)
-
-    move = (1, 2)
-    hex_board.make_move(move)
-    move = (0, 2)
-    hex_board.make_move(move)
-    move = (2, 2)
-    hex_board.make_move(move)
-
-    move = (3, 1)
-    hex_board.make_move(move)
-    #move = (3, 2)
-    #hex_board.make_move(move)
-
-    move = (0, 3)
-    hex_board.make_move(move)
-    move = (3, 3)
-    hex_board.make_move(move)
-    move = (1, 3)
-    hex_board.make_move(move)
-    move = (2, 3)
-    hex_board.make_move(move)
-
-    #hex_board.show()
-    print(hex_board.player1_won())
-    print(hex_board.player2_won())
-
-
-if __name__ == '__main__':
-    main()
