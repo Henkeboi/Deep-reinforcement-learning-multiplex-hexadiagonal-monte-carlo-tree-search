@@ -1,0 +1,9 @@
+board_size:4
+episodes:100
+simulations:100
+la:0.01
+optimizer:Adam
+M:3
+G:1000
+conv_layers:(32 2 2),(32 2 2)
+dense_layers:16

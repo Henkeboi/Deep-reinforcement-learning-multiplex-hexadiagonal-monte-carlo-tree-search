@@ -19,8 +19,8 @@ class Cell:
             return False
 
     def add_neighbour(self, cell):
-        #assert(not cell == None)
-        #assert(not self == cell)
+        assert(not cell == None)
+        assert(not self == cell)
         self.adjacent.append(cell)
         if not cell.has_neighbour(self):
             cell.add_neighbour(self)
@@ -125,7 +125,7 @@ class StateManager:
 
     def make_move(self, move):
         x, y = move[0], move[1]
-        #assert(self.board[y][x].value == 0)
+        assert(self.board[y][x].value == 0)
 
         if self.player1_to_move:
             self.board[y][x].value = 1
@@ -135,7 +135,7 @@ class StateManager:
 
     def undo_move(self, move):
         x, y = move[0], move[1]
-        #assert(not self.board[y][x].value == 0)
+        assert(not self.board[y][x].value == 0)
         self.board[y][x].value = 0
         self.player1_to_move = not self.player1_to_move
 

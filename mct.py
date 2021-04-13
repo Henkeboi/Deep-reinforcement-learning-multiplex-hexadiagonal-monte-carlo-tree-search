@@ -7,9 +7,8 @@ from state_manager import StateManager
 from functools import lru_cache
 
 class MCT:
-    def __init__(self, nn, num_search_games, num_simulations):
+    def __init__(self, nn, num_simulations):
         self.nn = nn
-        self.num_search_games = num_search_games
         self.num_simulations = num_simulations
 
     def traverse_to_leaf(self):
@@ -117,10 +116,9 @@ class MCT:
         return training_data
 
 def main():
-    num_search_games = 10
     num_simulations = 20
     max_depth = 5
-    mct1 = MCT(None, num_search_games, num_simulations, max_depth)
+    mct1 = MCT(None, num_simulations, max_depth)
 
     state_manager = StateManager(4)
     for i in range(0, 1):
