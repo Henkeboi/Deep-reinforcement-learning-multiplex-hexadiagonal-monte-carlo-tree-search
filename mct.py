@@ -33,7 +33,7 @@ class MCT:
     @lru_cache()
     def rollout(self, leaf):
         size = int((len(leaf.state) - 1) ** 0.5)
-        leaf_state, first_iteration = Hex(size, leaf.state), True
+        leaf_state, first_iteration = StateManager(size, leaf.state), True
         while True:
             if leaf_state.player1_won():
                 score = 1.0
@@ -58,7 +58,7 @@ class MCT:
             return selected_child
 
         size = int((len(parent.state) - 1) ** 0.5)
-        parent_state = Hex(size, parent.state)
+        parent_state = StateManager(size, parent.state)
         if parent_state.player1_to_move:
             max_Q = 0.0
             selected_child = None
@@ -122,7 +122,7 @@ def main():
     max_depth = 5
     mct1 = MCT(None, num_search_games, num_simulations, max_depth)
 
-    state_manager = Hex(4)
+    state_manager = StateManager(4)
     for i in range(0, 1):
         mct1.play_game(copy.deepcopy(state_manager))
     

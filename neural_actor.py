@@ -14,10 +14,11 @@ class Network(torch.nn.Module):
         super(Network, self).__init__()
         self.output_size = output_size
         self.layers = torch.nn.ModuleList()
-        layer = torch.nn.Conv2d(in_channels=2, out_channels=1, kernel_size=(2, 2))
+        layer = torch.nn.Conv2d(in_channels=2, out_channels=8, kernel_size=(2, 2))
+        self.layers.append(layer)
+        layer = torch.nn.Conv2d(in_channels=8, out_channels=1, kernel_size=(2, 2))
         self.layers.append(layer)
         self.layers.append(torch.nn.Flatten())
-
         for i in range(0, len(dense_layers) - 1):
             input_size = dense_layers[i]
             layer = torch.nn.Linear(input_size, dense_layers[i + 1])
@@ -93,8 +94,8 @@ def main():
     max_num_moves = int(board_size ** 2)
     state_space_size = int(board_size ** 2 + 1)
     conv_layers = []
-    state_space_size = 9
-    hidden_layers = [state_space_size, 25, max_num_moves] 
+    state_space_size = 4
+    hidden_layers = [state_space_size,  max_num_moves] 
     la = 0.01
 
     state_manager = StateManager(board_size)
@@ -123,8 +124,8 @@ def main():
     #    losses.append(loss)
     #    print(str(i) + " " +  str(loss))
     #print(time.time() - start_time)
-    #player2.store_model('16.1')
-    player2.load_model('16.1')
+    #player2.store_model('16.2')
+    player2.load_model('16.2')
 
     win1 = 0
     win2 = 0
