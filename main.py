@@ -99,13 +99,24 @@ def main():
         player.store_model('iteration' + str(num_episodes))
         print("Stored")
 
-    player1 = NeuralActor(dense_layers, max_num_moves, la, device)
-    player2 = NeuralActor(dense_layers, max_num_moves, la, device)
+    players = []
+    for i in range(num_episodes + 1):
+        if i % math.floor(num_episodes / M) == 0 and not i == 0:
+            player = NeuralActor(dense_layers, max_num_moves, la, device)
+            player.load_model('iteration' + str(i))
+            players.append(player)
     
-    player1.load_model('iteration400')
-    player2.load_model('iteration100')
-
-    print(play(player1, player2)) 
+    player_scores = [0 for i in range(len(players))]
+    for i in range(len(players)):
+        for j in range(i, len(players)):
+            if not i == j:
+                print(str(i) + " vs " + str(j)) 
+                score1, score2 = play(players[i], players[j])
+                player_scores[i] += score1
+                player_scores[j] += score2
+    
+    for i in range(len(player_scores)):
+        print("Score player" + str(i) + ": " + str(player_scores[i]))
 
 
 if __name__ == '__main__':
