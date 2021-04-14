@@ -6,6 +6,6 @@ optimizer:Adam
 M:4
 G:200
 dense_layers:15
-activation_functions:relu,relu
+activation_functions:relu,relu,sigmoid
 train:1
 num_display:0

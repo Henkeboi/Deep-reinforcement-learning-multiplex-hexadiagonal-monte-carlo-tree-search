@@ -105,10 +105,10 @@ class Hex:
 
         for x in range(0, self.size):
             for y in range(0, self.size):
-                pos_x = x - 0.5 * y
-                pos_y = y
-                #pos_x = (x + y) / (2 ** 0.5)
-                #pos_y = (y - x) / (2 ** 0.5)
+                #pos_x = x - 0.5 * y
+                #pos_y = y
+                pos_x = (x + y) / (2 ** 0.5)
+                pos_y = (y - x) / (2 ** 0.5)
                 pos[node_counter] = (pos_x, pos_y)
                 for neighbour in self.board[y][x].get_neighbours():
                     edges.append((node_counter, self.get_graph_index(neighbour.x, neighbour.y)))

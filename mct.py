@@ -10,6 +10,11 @@ class MCT:
         self.nn = nn
         self.num_search_games = num_search_games
         self.num_simulations = num_simulations
+        self.eps = 0.5
+
+
+    def decrease_eps(self):
+        self.eps -= 0.001
 
     def traverse_to_leaf(self):
         parent = self.root_node
@@ -43,10 +48,11 @@ class MCT:
             if leaf_state.is_finished():
                 print("No winner error")
                 quit()
-            if first_iteration:
+            if first_iteration or self.eps > random.random():
                 possible_moves = leaf_state.get_moves()
                 move = possible_moves[random.randint(0, len(possible_moves) - 1)]
                 first_iteration = False
+                self.decrease_eps()
             else:
                 move = leaf_state.convert_to_move(self.nn.get_action(leaf_state.string_representation()))
             leaf_state.make_move(move)

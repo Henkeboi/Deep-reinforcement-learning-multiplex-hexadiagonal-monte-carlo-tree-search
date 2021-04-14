@@ -5,7 +5,44 @@ from mct import MCT
 import random
 import math
 import copy
-import topp
+
+def play(player1, player2, G, board_size, num_display):
+    win1 = 0
+    win2 = 0
+    player1_starting = True
+    for i in range(G):
+        state_manager = Hex(board_size)
+        while not state_manager.player1_won() and not state_manager.player2_won():
+            if state_manager.player1_to_move:
+                if player1_starting == True:
+                    move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation(), True))
+                else:
+                    move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation(), True))
+            else:
+                if player1_starting  == True:
+                    move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation(), True))
+                else:
+                    move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation(), True))
+            state_manager.make_move(move)
+            if num_display > 0:
+                state_manager.show()
+
+        num_display -= 1
+        if state_manager.player1_won():
+            if player1_starting:
+                win1 += 1
+            else:
+                win2 += 1
+        elif state_manager.player2_won():
+            if player1_starting:
+                win2 += 1
+            else:
+                win1 += 1
+        else:
+            print("No winner")
+        player1_starting = not player1_starting
+    return win1, win2
+
 
 def main():
     config = Config()
@@ -59,7 +96,7 @@ def main():
         for j in range(i, len(players)):
             if not i == j:
                 print(str(i) + " vs " + str(j)) 
-                score1, score2 = topp.play(players[i], players[j], G, board_size, num_display)
+                score1, score2 = play(players[i], players[j], G, board_size, num_display)
                 player_scores[i] += score1
                 player_scores[j] += score2
                 if num_display > 0:

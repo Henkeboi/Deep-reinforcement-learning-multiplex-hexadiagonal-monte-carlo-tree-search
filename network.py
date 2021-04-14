@@ -19,18 +19,13 @@ class Network(torch.nn.Module):
             self.layers.append(layer)
 
     def forward(self, tensor):
-        output = None
         for i, layer in enumerate(self.layers):
-            if i == 0:
+            if self.activation_functions[i].lower() == 'relu':
                 tensor = torch.relu(layer(tensor))
-            else:
-                if self.activation_functions[i - 1].lower() == 'relu':
-                    tensor = torch.relu(layer(tensor))
-                elif self.activation_functions[i - 1].lower() == 'linear':
-                    tensor = layer(tensor)
-                elif self.activation_functions[i - 1].lower() == 'sigmoid':
-                    tensor = torch.sigmoid(layer(tensor))
-                elif self.activation_functions[i - 1].lower() == 'tanh':
-                    tensor = torch.tanh(layer(tensor))
-        output = torch.sigmoid(tensor)
-        return output
+            elif self.activation_functions[i].lower() == 'linear':
+                tensor = layer(tensor)
+            elif self.activation_functions[i].lower() == 'sigmoid':
+                tensor = torch.sigmoid(layer(tensor))
+            elif self.activation_functions[i - 1].lower() == 'tanh':
+                tensor = torch.tanh(layer(tensor))
+        return tensor
