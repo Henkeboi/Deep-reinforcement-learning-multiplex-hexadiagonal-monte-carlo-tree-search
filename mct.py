@@ -14,21 +14,14 @@ class MCT:
     def traverse_to_leaf(self):
         parent = self.root_node
         reached_final_state = False
-        is_first_iteration = True
         while not reached_final_state:
             children = parent.get_children()
             if len(children) == 0:
                 reached_final_state = True
             else:
-                if is_first_iteration: # Todo: Intergrate into tree policy
-                    selected_child = children[random.randrange(0, len(children))]
-                    parent.update_edge(selected_child.state)
-                    parent = selected_child
-                    is_first_iteration = False
-                else:
-                    selected_child = self.tree_policy_select(parent, children)
-                    parent.update_edge(selected_child.state)
-                    parent = selected_child
+                selected_child = self.tree_policy_select(parent, children)
+                parent.update_edge(selected_child.state)
+                parent = selected_child
         return parent
 
     def backpropagate(self, leaf, score):
@@ -97,15 +90,11 @@ class MCT:
             else:
                 self.root_node = max(self.root_node.children, key=itemgetter(1))[0]
 
-    def create_tensor(self, string):
-        state = np.fromstring(string, dtype=np.int8) - 48
-        return state
-
     def get_training_data(self):
         training_data = []
         self.root_node = self.root_node.parent # The last node has no label.
         while not self.root_node == None:
-            state = self.create_tensor(self.root_node.state)
+            state = np.fromstring(self.root_node.state, dtype=np.int8) - 48
             labels = [item[1] for item in self.root_node.children]
             labels_aligned = []
             child_index = 0
