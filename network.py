@@ -32,5 +32,5 @@ class Network(torch.nn.Module):
                     tensor = torch.sigmoid(layer(tensor))
                 elif self.activation_functions[i - 1].lower() == 'tanh':
                     tensor = torch.tanh(layer(tensor))
-        output = torch.tanh(tensor)
+        output = torch.sigmoid(tensor)
         return output

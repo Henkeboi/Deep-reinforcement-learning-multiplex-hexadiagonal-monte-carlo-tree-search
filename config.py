@@ -12,7 +12,8 @@ class Config:
             'G': None,
             'dense_layers' : None,
             'activation_functions' : None,
-            'train' : None
+            'train' : None,
+            'num_display' : None
        }
     
     def get_config(self):
@@ -52,5 +53,7 @@ class Config:
             for var in data.split(','):
                 self.data['activation_functions'].append(var)
         if variable == 'train':
+            self.data[variable] = int(data)
+        if variable == 'num_display':
             self.data[variable] = int(data)
 

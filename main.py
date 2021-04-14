@@ -7,7 +7,7 @@ import math
 import copy
 
 
-def play(player1, player2, G, board_size):
+def play(player1, player2, G, board_size, num_display):
     win1 = 0
     win2 = 0
     player1_starting = True
@@ -25,7 +25,10 @@ def play(player1, player2, G, board_size):
                 else:
                     move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation(), True))
             state_manager.make_move(move)
-            #state_manager.show()
+            if num_display > 0:
+                state_manager.show()
+
+        num_display -= 1
         if state_manager.player1_won():
             if player1_starting:
                 win1 += 1
@@ -56,6 +59,7 @@ def main():
     config_dense_layers = config_dict['dense_layers']
     activation_functions = config_dict['activation_functions']
     train = config_dict['train']
+    num_display = config_dict['num_display']
 
     max_num_moves = int(board_size ** 2)
     dense_layers = []
@@ -93,9 +97,11 @@ def main():
         for j in range(i, len(players)):
             if not i == j:
                 print(str(i) + " vs " + str(j)) 
-                score1, score2 = play(players[i], players[j], G, board_size)
+                score1, score2 = play(players[i], players[j], G, board_size, num_display)
                 player_scores[i] += score1
                 player_scores[j] += score2
+                if num_display > 0:
+                    num_display -= G
     
     for i in range(len(player_scores)):
         print("Score player" + str(i) + ": " + str(player_scores[i]))

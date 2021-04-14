@@ -52,7 +52,18 @@ class NeuralActor:
         move_index = torch.argmax(nn_output.data)
         while not Hex.is_legal(move_index, state_str):
             if rand == True:
-                move_index = torch.tensor(random.randrange(0, self.num_max_moves))
+                #move_index = torch.tensor(random.randrange(0, self.num_max_moves))
+                indexes = []
+                i = 0
+                for data in nn_output.data:
+                    if not data == 0:
+                        indexes.append(i)
+                    i += 1
+                if len(indexes) == 0:
+                    move_index = torch.tensor(random.randrange(0, self.num_max_moves))
+                else:
+                    move_index = torch.tensor(indexes[random.randrange(0, len(indexes))])
+                    nn_output.data[move_index] = 0
             else:
                 nn_output.data[move_index] = -1.0
                 move_index = torch.argmax(nn_output.data)
