@@ -1,8 +1,10 @@
 board_size:4
-num_episodes:400
+num_episodes:20
 simulations:10
-la:0.001
+la:0.01
 optimizer:Adam
 M:4
 G:1000
-dense_layers:30,30
+dense_layers:20,20
+activation_functions:relu,relu
+train:1

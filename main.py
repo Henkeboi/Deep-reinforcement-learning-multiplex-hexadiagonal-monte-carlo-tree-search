@@ -7,27 +7,19 @@ import math
 import copy
 
 
-def play(player1, player2):
+def play(player1, player2, G, board_size):
     win1 = 0
     win2 = 0
     player1_starting = True
-    for i in range(0, 2000):
-        state_manager = Hex(4)
+    for i in range(G):
+        state_manager = Hex(board_size)
         while not state_manager.player1_won() and not state_manager.player2_won():
             if state_manager.player1_to_move:
-                #move_index = random.randrange(0, board_size ** 2)
-                #while not Hex.is_legal(move_index, state_manager.string_representation()):
-                #    move_index = random.randrange(0, board_size ** 2)
-                #move = state_manager.convert_to_move(move_index)
                 if player1_starting == True:
                     move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation(), True))
                 else:
                     move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation(), True))
             else:
-                #move_index = random.randrange(0, board_size ** 2)
-                #while not Hex.is_legal(move_index, state_manager.string_representation()):
-                #    move_index = random.randrange(0, board_size ** 2)
-                #move = state_manager.convert_to_move(move_index)
                 if player1_starting  == True:
                     move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation(), True))
                 else:
@@ -62,8 +54,7 @@ def main():
     assert(M > 1)
     G = config_dict['G']
     config_dense_layers = config_dict['dense_layers']
-
-    max_depth = 1000000000
+    train = config_dict['train']
 
     max_num_moves = int(board_size ** 2)
     dense_layers = []
@@ -72,37 +63,26 @@ def main():
         dense_layers.append(neurons)
     dense_layers.append(max_num_moves)
     state_manager = Hex(board_size)
-    #player = NeuralActor(dense_layers, max_num_moves, la, optimizer)
-    #mct = MCT(player1, num_simulations)
 
-    device = 'cpu'
-    player = NeuralActor(dense_layers, max_num_moves, la, device)
-    mct = MCT(player, num_episodes, num_simulations, max_depth)
+    player = NeuralActor(dense_layers, max_num_moves, la, optimizer)
+    mct = MCT(player, num_episodes, num_simulations)
 
     # Train progressive policies
-    train = False
-    if train == True:
-        for i in range(num_episodes):
-            if math.floor(num_episodes / (M - 1)) == 0:
-                print("Modulo zero with this Episode and M config.")
-                quit()
-            else:
-                if i % math.floor(num_episodes / M) == 0 and not i == 0:
-                    print("Storing models/iteration" + str(i))
-                    player.store_model('iteration' + str(i))
-                    print("Stored")
+    if train == 1:
+        for i in range(0, num_episodes + 1):
+            if i % math.floor(num_episodes / M) == 0 and not i == 0:
+                print("Storing models/iteration" + str(i))
+                player.store_model('iteration' + str(i))
+                print("Stored")
             mct.play_game(copy.deepcopy(state_manager))
             training_data = mct.get_training_data()
             loss = player.update_Q(training_data)
             print(str(i) + " " +  str(loss))
-        print("Storing models/iteration" + str(num_episodes))
-        player.store_model('iteration' + str(num_episodes))
-        print("Stored")
 
     players = []
     for i in range(num_episodes + 1):
         if i % math.floor(num_episodes / M) == 0 and not i == 0:
-            player = NeuralActor(dense_layers, max_num_moves, la, device)
+            player = NeuralActor(dense_layers, max_num_moves, la, optimizer)
             player.load_model('iteration' + str(i))
             players.append(player)
     
@@ -111,7 +91,7 @@ def main():
         for j in range(i, len(players)):
             if not i == j:
                 print(str(i) + " vs " + str(j)) 
-                score1, score2 = play(players[i], players[j])
+                score1, score2 = play(players[i], players[j], G, board_size)
                 player_scores[i] += score1
                 player_scores[j] += score2
     

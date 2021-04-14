@@ -10,7 +10,9 @@ class Config:
             'optimizer' : None,
             'M': None,
             'G': None,
-            'dense_layers' : None
+            'dense_layers' : None,
+            'activation_functions' : None,
+            'train' : None
        }
     
     def get_config(self):
@@ -45,4 +47,6 @@ class Config:
             self.data['dense_layers'] = []
             for var in data.split(','):
                 self.data['dense_layers'].append(int(var))
+        if variable == 'train':
+            self.data[variable] = int(data)
 

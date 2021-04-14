@@ -6,31 +6,29 @@ import copy
 from hex import Hex
 
 class MCT:
-    def __init__(self, nn, num_search_games, num_simulations, max_depth):
+    def __init__(self, nn, num_search_games, num_simulations):
         self.nn = nn
         self.num_search_games = num_search_games
         self.num_simulations = num_simulations
-        self.max_depth = max_depth
 
     def traverse_to_leaf(self):
         parent = self.root_node
-        depth = 0
         reached_final_state = False
-        while depth < self.max_depth and not reached_final_state:
+        is_first_iteration = True
+        while not reached_final_state:
             children = parent.get_children()
             if len(children) == 0:
                 reached_final_state = True
             else:
-                if depth == 0: # Todo: Intergrate into tree policy
+                if is_first_iteration: # Todo: Intergrate into tree policy
                     selected_child = children[random.randrange(0, len(children))]
                     parent.update_edge(selected_child.state)
                     parent = selected_child
-                    depth = depth + 1
+                    is_first_iteration = False
                 else:
                     selected_child = self.tree_policy_select(parent, children)
                     parent.update_edge(selected_child.state)
                     parent = selected_child
-                    depth = depth + 1
         return parent
 
     def backpropagate(self, leaf, score):
