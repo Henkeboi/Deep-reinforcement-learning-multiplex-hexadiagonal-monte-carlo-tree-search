@@ -63,11 +63,12 @@ class MCT:
     def tree_policy_select(self, parent, children):
         size = int((len(parent.state) - 1) ** 0.5)
         parent_state = Hex(size, parent.state)
+        c = 1.0
         if parent_state.player1_to_move:
             max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.get_Q(parent_state.player1_to_move) + np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                Q = child.get_Q(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
                 if Q > max_Q or selected_child == None:
                     max_Q = Q
                     selected_child = child
@@ -75,7 +76,7 @@ class MCT:
             max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.get_Q(parent_state.player1_to_move) - np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                Q = child.get_Q(parent_state.player1_to_move) - c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
                 if Q < max_Q or selected_child == None:
                     max_Q = Q
                     selected_child = child
@@ -119,17 +120,3 @@ class MCT:
             training_data.append((state, labels_aligned))
             self.root_node = self.root_node.parent
         return training_data
-
-def main():
-    num_search_games = 10
-    num_simulations = 20
-    max_depth = 5
-    mct1 = MCT(None, num_search_games, num_simulations, max_depth)
-
-    state_manager = Hex(4)
-    for i in range(0, 1):
-        mct1.play_game(copy.deepcopy(state_manager))
-    
-    
-if __name__ == '__main__':
-    main()

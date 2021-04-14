@@ -56,14 +56,17 @@ class NeuralActor:
         self.optimizer.zero_grad()
         return loss
 
-    def get_action(self, state_str):
+    def get_action(self, state_str, rand=False):
         state = np.fromstring(state_str, np.int8) - 48
         state = torch.from_numpy(state).float().to(self.dev)
         nn_output = self.nn(state) # Forward pass
         move_index = torch.argmax(nn_output.data)
         while not Hex.is_legal(move_index, state_str):
-            nn_output.data[move_index] = -1.0
-            move_index = torch.argmax(nn_output.data)
+            if rand == True:
+                move_index = torch.tensor(random.randrange(0, self.num_max_moves))
+            else:
+                nn_output.data[move_index] = -1.0
+                move_index = torch.argmax(nn_output.data)
         return move_index.item()
 
     def store_model(self, name):
@@ -81,7 +84,7 @@ def main():
 
     state_manager = Hex(board_size)
     num_search_games = 1
-    num_simulations = 100
+    num_simulations = 200
     max_depth = 1000000
     device = 'cpu'
 
@@ -90,15 +93,16 @@ def main():
     mct1 = MCT(player1, num_search_games, num_simulations, max_depth)
     mct2 = MCT(player2, num_search_games, num_simulations, max_depth)
 
-    train = False
+    train = True
     if train == True:
         for i in range(0, 100):
             mct2.play_game(copy.deepcopy(state_manager))
             training_data = mct2.get_training_data()
             loss = player2.update_Q(training_data)
             print(str(i) + " " + str(loss))
-        player2.store_model('16.3')
-    player2.load_model('16.3')
+        player2.store_model('16.7')
+    #player1.load_model('16.5')
+    player2.load_model('16.7')
 
     win1 = 0
     win2 = 0
@@ -109,14 +113,14 @@ def main():
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                #move = state_manager.convert_to_move(move_index)
-                move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                move = state_manager.convert_to_move(move_index)
+                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
             else:
                 move_index = random.randrange(0, board_size ** 2)
                 while not Hex.is_legal(move_index, state_manager.string_representation()):
                    move_index = random.randrange(0, board_size ** 2)
-                move = state_manager.convert_to_move(move_index)
-                #move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation()))
+                #move = state_manager.convert_to_move(move_index)
+                move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation()))
             state_manager.make_move(move)
             #state_manager.show()
         if state_manager.player1_won():
@@ -128,11 +132,6 @@ def main():
 
     print("Times player 1 won: " + str(win1) + ". " + "Times player2 won: " + str(win2))
 
-    #state_manager.show()
-    #if state_manager.player1_won():
-    #    print("Player1 won")
-    #elif state_manager.player2_won():
-    #    print("Player2 won")
 
 if __name__ == '__main__':
     main()

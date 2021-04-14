@@ -57,11 +57,10 @@ class Node:
 
     def get_Q(self, player1_to_move):
         if self.num_traversed == 0:
-            return 0.0
-            #if player1_to_move:
-            #    return np.inf
-            #else:
-            #    return -np.inf
+            if player1_to_move:
+                return np.inf
+            else:
+                return -np.inf
         else:
             return self.Q
 
