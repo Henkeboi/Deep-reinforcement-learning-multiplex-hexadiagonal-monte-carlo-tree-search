@@ -9,10 +9,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class NeuralActor:
-    def __init__(self, hidden_layers, num_max_moves, learning_rate, optimizer):
+    def __init__(self, hidden_layers, activation_functions, num_max_moves, learning_rate, optimizer):
         torch.manual_seed(42)
         self.num_max_moves = num_max_moves
-        self.nn = Network(hidden_layers, num_max_moves)
+        self.nn = Network(hidden_layers, activation_functions, num_max_moves)
         self.learning_rate = learning_rate
         self.loss_function = torch.nn.MSELoss() 
         if optimizer.lower() == 'sgd':

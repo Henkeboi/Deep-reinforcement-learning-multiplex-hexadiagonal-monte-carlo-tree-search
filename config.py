@@ -47,6 +47,10 @@ class Config:
             self.data['dense_layers'] = []
             for var in data.split(','):
                 self.data['dense_layers'].append(int(var))
+        if variable == 'activation_functions':
+            self.data['activation_functions'] = []
+            for var in data.split(','):
+                self.data['activation_functions'].append(var)
         if variable == 'train':
             self.data[variable] = int(data)
 

@@ -54,6 +54,7 @@ def main():
     assert(M > 1)
     G = config_dict['G']
     config_dense_layers = config_dict['dense_layers']
+    activation_functions = config_dict['activation_functions']
     train = config_dict['train']
 
     max_num_moves = int(board_size ** 2)
@@ -62,9 +63,10 @@ def main():
     for neurons in config_dense_layers:
         dense_layers.append(neurons)
     dense_layers.append(max_num_moves)
+
     state_manager = Hex(board_size)
 
-    player = NeuralActor(dense_layers, max_num_moves, la, optimizer)
+    player = NeuralActor(dense_layers, activation_functions, max_num_moves, la, optimizer)
     mct = MCT(player, num_episodes, num_simulations)
 
     # Train progressive policies
@@ -82,7 +84,7 @@ def main():
     players = []
     for i in range(num_episodes + 1):
         if i % math.floor(num_episodes / M) == 0 and not i == 0:
-            player = NeuralActor(dense_layers, max_num_moves, la, optimizer)
+            player = NeuralActor(dense_layers, activation_functions, max_num_moves, la, optimizer)
             player.load_model('iteration' + str(i))
             players.append(player)
     
