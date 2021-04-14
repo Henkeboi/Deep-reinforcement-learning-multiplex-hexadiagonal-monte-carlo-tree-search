@@ -11,10 +11,12 @@ import matplotlib.pyplot as plt
 class NeuralActor:
     def __init__(self, hidden_layers, activation_functions, num_max_moves, learning_rate, optimizer):
         torch.manual_seed(42)
+        random.seed(10)
         self.num_max_moves = num_max_moves
         self.nn = Network(hidden_layers, activation_functions, num_max_moves)
         self.learning_rate = learning_rate
         self.loss_function = torch.nn.MSELoss() 
+        self.rbuffer = []
         if optimizer.lower() == 'sgd':
             self.optimizer = torch.optim.SGD(self.nn.parameters(), lr=self.learning_rate)
         elif optimizer.lower() == 'adam':
@@ -26,17 +28,18 @@ class NeuralActor:
      
     def update_Q(self, training_data):
         loss = 0
-        for epoch in range(1):
-            for i in range(0, len(training_data)):
-                state, label = training_data[i]
-                state = torch.from_numpy(state).float()
-                nn_output = self.nn(state) # Forward pass
-                nn_output = nn_output.view(1, self.num_max_moves)
-                index = [x / sum(label) for x in label]
-                label = torch.from_numpy(np.asarray([index])).type(torch.FloatTensor)
-                nn_loss = self.loss_function(nn_output, label)
-                nn_loss.backward()
-                loss += nn_loss.item()
+        self.rbuffer.append(training_data)
+        training_data = self.rbuffer[random.randrange(0, len(self.rbuffer))]
+        for i in range(0, len(training_data)):
+            state, label = training_data[i]
+            state = torch.from_numpy(state).float()
+            nn_output = self.nn(state) # Forward pass
+            nn_output = nn_output.view(1, self.num_max_moves)
+            index = [x / sum(label) for x in label]
+            label = torch.from_numpy(np.asarray([index])).type(torch.FloatTensor)
+            nn_loss = self.loss_function(nn_output, label)
+            nn_loss.backward()
+            loss += nn_loss.item()
         loss = loss / len(training_data)
         self.optimizer.step()
         self.optimizer.zero_grad()
