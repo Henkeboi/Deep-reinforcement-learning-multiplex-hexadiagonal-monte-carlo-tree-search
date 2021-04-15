@@ -58,11 +58,11 @@ class MCT:
         size = int((len(parent.state) - 1) ** 0.5)
         parent_state = Hex(size, parent.state)
         c = 1.0
-        Q_values = [(child.get_val(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))) for child in children]
+        a_values = [(child.get_val(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))) for child in children]
         if parent_state.player1_to_move:
-            return children[Q_values.index(max(Q_values))]
+            return children[a_values.index(max(a_values))]
         else:
-             return children[Q_values.index(min(Q_values))]
+             return children[a_values.index(min(a_values))]
 
     def run_simulations(self):
         for i in range(0, self.num_simulations):

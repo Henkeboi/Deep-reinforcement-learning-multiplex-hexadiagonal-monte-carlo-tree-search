@@ -84,7 +84,7 @@ class TOPP:
                     player_scores[i] += score1
                     player_scores[j] += score2
                     if self.num_display > 0:
-                        self.num_display -= G
+                        self.num_display -= self.G
         
         for i in range(len(player_scores)):
             print("Score player" + str(i) + ": " + str(player_scores[i]))
