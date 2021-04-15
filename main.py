@@ -43,9 +43,6 @@ def main():
                 player.store_model('iteration' + str(i))
                 print("Stored")
             mct.play_game(copy.deepcopy(state_manager))
-            training_data = mct.get_training_data()
-            loss = player.update_Q(training_data)
-            print(str(i) + " " +  str(loss))
 
     players = []
     for i in range(num_episodes + 1):

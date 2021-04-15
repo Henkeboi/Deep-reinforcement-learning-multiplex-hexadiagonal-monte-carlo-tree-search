@@ -81,6 +81,7 @@ class MCT:
             leaf = self.traverse_to_leaf()
             score = self.rollout(leaf)
             self.backpropagate(leaf, score)
+            
 
     def play_game(self, root_state):
         self.root_node = Node(None, root_state.string_representation())
@@ -91,7 +92,16 @@ class MCT:
             if len(self.root_node.children) == 0:
                 game_finished = True
             else:
-                self.root_node = max(self.root_node.children, key=itemgetter(1))[0]
+                max_val = -1
+                selected_child = None
+                for child in self.root_node.children:
+                    if child[1] > max_val:
+                        selected_child = child[0]
+                        max_val = child[1]
+                self.root_node = selected_child
+        training_data = self.get_training_data()
+        loss = self.nn.update_net(training_data)
+        print(str(i) + " " +  str(loss))
 
     def get_training_data(self):
         training_data = []

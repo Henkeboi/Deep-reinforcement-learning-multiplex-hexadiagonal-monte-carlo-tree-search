@@ -26,7 +26,7 @@ class NeuralActor:
         elif optimizer.lower() == 'rmsprop':
             self.optimizer = torch.optim.RMSprop(self.nn.parameters(), lr=self.learning_rate)
      
-    def update_Q(self, training_data):
+    def update_net(self, training_data):
         loss = 0
         self.rbuffer.append(training_data)
         training_data = self.rbuffer[random.randrange(0, len(self.rbuffer))]
@@ -40,6 +40,7 @@ class NeuralActor:
             nn_loss = self.loss_function(nn_output, label)
             nn_loss.backward()
             loss += nn_loss.item()
+
         loss = loss / len(training_data)
         self.optimizer.step()
         self.optimizer.zero_grad()
