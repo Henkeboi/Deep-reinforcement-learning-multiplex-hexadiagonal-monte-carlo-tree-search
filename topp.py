@@ -69,11 +69,14 @@ class TOPP:
 
     def round_robin(self):
         if self.train == 1:
+            players_to_load = self.M
             for i in range(self.num_episodes + 1):
-                if i % math.floor(self.num_episodes / self.M) == 0 and not i == 0:
+                if i % math.floor(self.num_episodes / (self.M - 1)) == 0 and players_to_load > 0:
                     player = NeuralActor(self.dense_layers, self.activation_functions, self.max_num_moves, self.la, self.optimizer)
+                    print("Load model " + str(i))
                     player.load_model('iteration' + str(i))
                     self.players.append(player)
+                    players_to_load -= 1
         
         player_scores = [0 for i in range(len(self.players))]
         for i in range(len(self.players)):
@@ -96,11 +99,13 @@ class TOPP:
         mct = MCT(player, self.num_episodes, self.num_simulations)
 
         # Train progressive policies
+        players_to_store = self.M
         for i in range(0, self.num_episodes + 1):
-            if i % math.floor(self.num_episodes / self.M) == 0 and not i == 0:
+            if i % math.floor(self.num_episodes / (self.M - 1)) == 0 and players_to_store > 0:
                 print("Storing models/iteration" + str(i))
                 player.store_model('iteration' + str(i))
                 print("Stored")
+                players_to_store -= 1
             loss = mct.play_game(copy.deepcopy(state_manager))
             print(str(i) + ": Loss : " + str(loss))
 

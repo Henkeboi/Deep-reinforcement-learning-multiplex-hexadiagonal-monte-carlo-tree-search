@@ -16,7 +16,6 @@ def main():
     la = config_dict['la']
     optimizer = config_dict['optimizer']
     M = config_dict['M']
-    assert(M > 1)
     G = config_dict['G']
     config_dense_layers = config_dict['dense_layers']
     activation_functions = config_dict['activation_functions']
@@ -43,39 +42,6 @@ def main():
     if train == 1:
         topp.do_training()
         topp.round_robin()
-
-    quit()
-
-    # Train progressive policies
-    if train == 1:
-        for i in range(0, num_episodes + 1):
-            if i % math.floor(num_episodes / M) == 0 and not i == 0:
-                print("Storing models/iteration" + str(i))
-                player.store_model('iteration' + str(i))
-                print("Stored")
-            mct.play_game(copy.deepcopy(state_manager))
-
-    players = []
-    for i in range(num_episodes + 1):
-        if i % math.floor(num_episodes / M) == 0 and not i == 0:
-            player = NeuralActor(dense_layers, activation_functions, max_num_moves, la, optimizer)
-            player.load_model('iteration' + str(i))
-            players.append(player)
-    
-    player_scores = [0 for i in range(len(players))]
-    for i in range(len(players)):
-        for j in range(i, len(players)):
-            if not i == j:
-                print(str(i) + " vs " + str(j)) 
-                score1, score2 = topp.play(players[i], players[j], G, board_size, num_display)
-                player_scores[i] += score1
-                player_scores[j] += score2
-                if num_display > 0:
-                    num_display -= G
-    
-    for i in range(len(player_scores)):
-        print("Score player" + str(i) + ": " + str(player_scores[i]))
-
 
 if __name__ == '__main__':
     main()
