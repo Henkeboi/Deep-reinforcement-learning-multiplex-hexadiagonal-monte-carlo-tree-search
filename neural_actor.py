@@ -25,15 +25,24 @@ class NeuralActor:
             self.optimizer = torch.optim.Adagrad(self.nn.parameters(), lr=self.learning_rate)
         elif optimizer.lower() == 'rmsprop':
             self.optimizer = torch.optim.RMSprop(self.nn.parameters(), lr=self.learning_rate)
+
+        self.player1 = torch.ones((int(num_max_moves ** 0.5), int(num_max_moves ** 0.5))) * 0.5
+        self.player2 = torch.ones((int(num_max_moves ** 0.5), int(num_max_moves ** 0.5)))
      
     def update_net(self, training_data):
         loss = 0
         self.rbuffer.append(training_data)
         training_data = self.rbuffer[random.randrange(0, len(self.rbuffer))]
+
         for i in range(0, len(training_data)):
             state, label = training_data[i]
-            state = torch.from_numpy(state).float()
-            nn_output = self.nn(state) # Forward pass
+            if state[-1] == 1:
+                player = self.player1
+            elif state[-1] == 2:
+                player = self.player2
+            state = torch.from_numpy(state[:-1]).float().reshape(int(self.num_max_moves ** 0.5), int(self.num_max_moves ** 0.5))
+            state = torch.stack([state, player])
+            nn_output = self.nn(state).flatten() # Forward pass
             nn_output = nn_output.view(1, self.num_max_moves)
             index = [x / sum(label) for x in label]
             label = torch.from_numpy(np.asarray([index])).type(torch.FloatTensor)
@@ -48,8 +57,14 @@ class NeuralActor:
 
     def get_action(self, state_str, rand=False):
         state = np.fromstring(state_str, np.int8) - 48
-        state = torch.from_numpy(state).float()
-        nn_output = self.nn(state) # Forward pass
+        if state[-1] == 1:
+            player = self.player1
+        elif state[-1] == 2:
+            player = self.player2
+        state = torch.from_numpy(state[0:-1]).float().reshape(int(self.num_max_moves ** 0.5), int(self.num_max_moves ** 0.5))
+        state = torch.stack([state, player])
+       
+        nn_output = self.nn(state).flatten() # Forward pass
         move_index = torch.argmax(nn_output.data)
         while not Hex.is_legal(move_index, state_str):
             if rand == True:

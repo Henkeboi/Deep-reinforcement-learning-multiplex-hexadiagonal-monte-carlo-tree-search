@@ -35,6 +35,9 @@ def main():
     mct = MCT(player, num_episodes, num_simulations)
 
     topp = TOPP() 
+    topp.play_random()
+    quit()
+
     if not train == 1:
         print("Using stored models")
         topp.load_trained_players()

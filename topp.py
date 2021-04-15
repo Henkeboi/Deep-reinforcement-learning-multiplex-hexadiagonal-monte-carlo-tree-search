@@ -6,6 +6,13 @@ import random
 import math
 import copy
 
+class RandomAgent:
+    def __init__(self, board_size):
+        self.board_size = board_size
+    
+    def get_action(self, arg1, arg2):
+        return random.randint(0, self.board_size ** 2)
+
 class TOPP:
     def __init__(self):
         config = Config()
@@ -39,14 +46,26 @@ class TOPP:
             while not state_manager.player1_won() and not state_manager.player2_won():
                 if state_manager.player1_to_move:
                     if player1_starting == True:
-                        move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation(), True))
+                        move = player1.get_action(state_manager.string_representation(), True)
+                        while not Hex.is_legal(move, state_manager.string_representation()):
+                            move = player1.get_action(state_manager.string_representation(), True)
+                        move = state_manager.convert_to_move(move)
                     else:
-                        move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation(), True))
+                        move = player2.get_action(state_manager.string_representation(), True)
+                        while not Hex.is_legal(move, state_manager.string_representation()):
+                            move = player2.get_action(state_manager.string_representation(), True)
+                        move = state_manager.convert_to_move(move)
                 else:
                     if player1_starting  == True:
-                        move = state_manager.convert_to_move(player2.get_action(state_manager.string_representation(), True))
+                        move = player2.get_action(state_manager.string_representation(), True)
+                        while not Hex.is_legal(move, state_manager.string_representation()):
+                            move = player2.get_action(state_manager.string_representation(), True)
+                        move = state_manager.convert_to_move(move)
                     else:
-                        move = state_manager.convert_to_move(player1.get_action(state_manager.string_representation(), True))
+                        move = player1.get_action(state_manager.string_representation(), True)
+                        while not Hex.is_legal(move, state_manager.string_representation()):
+                            move = player1.get_action(state_manager.string_representation(), True)
+                        move = state_manager.convert_to_move(move)
                 state_manager.make_move(move)
                 if num_display > 0:
                     state_manager.show()
@@ -66,6 +85,18 @@ class TOPP:
                 print("No winner")
             player1_starting = not player1_starting
         return win1, win2
+
+    def play_random(self):
+        player = NeuralActor(self.dense_layers, self.activation_functions, self.max_num_moves, self.la, self.optimizer)
+        name = 'iteration99'
+        print("Load model " + name)
+        player.load_model(name)
+        random_agent = RandomAgent(self.board_size)
+        win1, win2 = self.play(player, random_agent, 1000, self.board_size, 0)
+        print("Winning: " + str(win1))
+        print("Loosing: " + str(win2))
+        quit()
+
 
     def round_robin(self):
         if self.train == 1:

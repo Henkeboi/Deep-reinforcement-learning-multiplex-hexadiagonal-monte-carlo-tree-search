@@ -57,6 +57,7 @@ class Node:
 
     def get_val(self, player1_to_move):
         if self.num_traversed == 0:
+            return np.inf
             if player1_to_move:
                 return np.inf
             else:

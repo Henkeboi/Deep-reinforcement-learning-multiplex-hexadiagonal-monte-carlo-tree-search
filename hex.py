@@ -105,8 +105,6 @@ class Hex:
 
         for x in range(0, self.size):
             for y in range(0, self.size):
-                #pos_x = x - 0.5 * y
-                #pos_y = y
                 pos_x = (x + y) / (2 ** 0.5)
                 pos_y = (y - x) / (2 ** 0.5)
                 pos[node_counter] = (pos_x, pos_y)
@@ -125,8 +123,6 @@ class Hex:
         plt.clf()
         nx.draw(G, pos, edgelist=edges, node_color=colors)
         plt.show(block=True)
-        #plt.show(block=False)
-        #plt.pause(3)
 
     def make_move(self, move):
         x = move[0]
