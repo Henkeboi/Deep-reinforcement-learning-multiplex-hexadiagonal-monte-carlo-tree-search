@@ -6,6 +6,26 @@ import random
 import math
 import copy
 
+class TOPP:
+    def __init__(self):
+        config = Config()
+        config_dict = config.get_config()
+        board_size = config_dict['board_size'] 
+        num_episodes = config_dict['num_episodes']
+        num_simulations = config_dict['simulations']
+        la = config_dict['la']
+        optimizer = config_dict['optimizer']
+        M = config_dict['M']
+        assert(M > 1)
+        G = config_dict['G']
+        config_dense_layers = config_dict['dense_layers']
+        activation_functions = config_dict['activation_functions']
+        train = config_dict['train']
+        num_display = config_dict['num_display']
+
+        max_num_moves = int(board_size ** 2)
+
+
 def play(player1, player2, G, board_size, num_display):
     win1 = 0
     win2 = 0
@@ -42,6 +62,46 @@ def play(player1, player2, G, board_size, num_display):
             print("No winner")
         player1_starting = not player1_starting
     return win1, win2
+
+
+def train():
+    config = Config()
+    config_dict = config.get_config()
+    board_size = config_dict['board_size'] 
+    num_episodes = config_dict['num_episodes']
+    num_simulations = config_dict['simulations']
+    la = config_dict['la']
+    optimizer = config_dict['optimizer']
+    M = config_dict['M']
+    assert(M > 1)
+    G = config_dict['G']
+    config_dense_layers = config_dict['dense_layers']
+    activation_functions = config_dict['activation_functions']
+    train = config_dict['train']
+    num_display = config_dict['num_display']
+
+    max_num_moves = int(board_size ** 2)
+    dense_layers = []
+    dense_layers.append(int(board_size ** 2 + 1))
+    for neurons in config_dense_layers:
+        dense_layers.append(neurons)
+    dense_layers.append(max_num_moves)
+
+    state_manager = Hex(board_size)
+
+    player = NeuralActor(dense_layers, activation_functions, max_num_moves, la, optimizer)
+    mct = MCT(player, num_episodes, num_simulations)
+
+    # Train progressive policies
+    for i in range(0, num_episodes + 1):
+        if i % math.floor(num_episodes / M) == 0 and not i == 0:
+            print("Storing models/iteration" + str(i))
+            player.store_model('iteration' + str(i))
+            print("Stored")
+        mct.play_game(copy.deepcopy(state_manager))
+        training_data = mct.get_training_data()
+        loss = player.update_Q(training_data)
+        print(str(i) + " " +  str(loss))
 
 
 def main():

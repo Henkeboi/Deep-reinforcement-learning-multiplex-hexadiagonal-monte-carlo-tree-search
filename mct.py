@@ -10,7 +10,7 @@ class MCT:
         self.nn = nn
         self.num_search_games = num_search_games
         self.num_simulations = num_simulations
-        self.eps = 0.5
+        self.eps = 0.4
 
     def traverse_to_leaf(self):
         parent = self.root_node
@@ -58,23 +58,11 @@ class MCT:
         size = int((len(parent.state) - 1) ** 0.5)
         parent_state = Hex(size, parent.state)
         c = 1.0
+        Q_values = [(child.get_Q(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))) for child in children]
         if parent_state.player1_to_move:
-            max_Q = 0.0
-            selected_child = None
-            for child in children:
-                Q = child.get_Q(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
-                if Q > max_Q or selected_child == None:
-                    max_Q = Q
-                    selected_child = child
+            return children[Q_values.index(max(Q_values))]
         else:
-            max_Q = 0.0
-            selected_child = None
-            for child in children:
-                Q = child.get_Q(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
-                if Q < max_Q or selected_child == None:
-                    max_Q = Q
-                    selected_child = child
-        return selected_child
+             return children[Q_values.index(min(Q_values))]
 
     def run_simulations(self):
         for i in range(0, self.num_simulations):

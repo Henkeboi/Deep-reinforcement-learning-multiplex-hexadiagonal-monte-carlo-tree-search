@@ -1,6 +1,6 @@
 board_size:4
-num_episodes:100
-simulations:10
+num_episodes:500
+simulations:100
 la:0.001
 optimizer:Adam
 M:4
