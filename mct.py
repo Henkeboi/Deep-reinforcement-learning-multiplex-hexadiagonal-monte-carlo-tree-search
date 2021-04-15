@@ -12,15 +12,12 @@ class MCT:
         self.num_simulations = num_simulations
         self.eps = 0.5
 
-
-    def decrease_eps(self):
-        self.eps -= 0.001
-
     def traverse_to_leaf(self):
         parent = self.root_node
         reached_final_state = False
-        while not reached_final_state:
-            children = parent.get_children()
+        reached_leaf = False
+        while not reached_final_state and not reached_leaf:
+            children, reached_leaf = parent.get_children()
             if len(children) == 0:
                 reached_final_state = True
             else:
@@ -51,8 +48,8 @@ class MCT:
             if first_iteration or self.eps > random.random():
                 possible_moves = leaf_state.get_moves()
                 move = possible_moves[random.randint(0, len(possible_moves) - 1)]
-                first_iteration = False
                 self.decrease_eps()
+                first_iteration = False
             else:
                 move = leaf_state.convert_to_move(self.nn.get_action(leaf_state.string_representation()))
             leaf_state.make_move(move)
@@ -73,7 +70,7 @@ class MCT:
             max_Q = 0.0
             selected_child = None
             for child in children:
-                Q = child.get_Q(parent_state.player1_to_move) - c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
+                Q = child.get_Q(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))
                 if Q < max_Q or selected_child == None:
                     max_Q = Q
                     selected_child = child
@@ -113,3 +110,8 @@ class MCT:
             training_data.append((state, labels_aligned))
             self.root_node = self.root_node.parent
         return training_data
+
+    def decrease_eps(self):
+        self.eps -= 0.001
+
+

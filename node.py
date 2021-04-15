@@ -47,13 +47,13 @@ class Node:
             children = []
             for child in self.children:
                 children.append(child[0])
-            return children
+            return children, False
         else:
             self.expand()
             children = []
             for child in self.children:
                 children.append(child[0])
-            return children
+            return children, True
 
     def get_Q(self, player1_to_move):
         if self.num_traversed == 0:
