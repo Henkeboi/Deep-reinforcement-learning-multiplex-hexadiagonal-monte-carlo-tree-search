@@ -5,7 +5,7 @@ from mct import MCT
 import random
 import math
 import copy
-import topp
+from topp import TOPP
 
 def main():
     config = Config()
@@ -34,6 +34,17 @@ def main():
 
     player = NeuralActor(dense_layers, activation_functions, max_num_moves, la, optimizer)
     mct = MCT(player, num_episodes, num_simulations)
+
+    topp = TOPP() 
+    if not train == 1:
+        print("Using stored models")
+        topp.load_trained_players()
+        topp.round_robin()
+    if train == 1:
+        topp.do_training()
+        topp.round_robin()
+
+    quit()
 
     # Train progressive policies
     if train == 1:

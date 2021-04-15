@@ -28,7 +28,7 @@ class MCT:
 
     def backpropagate(self, leaf, score):
         while not leaf == None:
-            leaf.update_Q(score)
+            leaf.update_val(score)
             leaf = leaf.parent
 
     def rollout(self, leaf):
@@ -58,7 +58,7 @@ class MCT:
         size = int((len(parent.state) - 1) ** 0.5)
         parent_state = Hex(size, parent.state)
         c = 1.0
-        Q_values = [(child.get_Q(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))) for child in children]
+        Q_values = [(child.get_val(parent_state.player1_to_move) + c * np.sqrt(np.log(parent.num_traversed) / (1.0 + parent.num_traversed_edge(child.state)))) for child in children]
         if parent_state.player1_to_move:
             return children[Q_values.index(max(Q_values))]
         else:
@@ -89,7 +89,7 @@ class MCT:
                 self.root_node = selected_child
         training_data = self.get_training_data()
         loss = self.nn.update_net(training_data)
-        print(str(i) + " " +  str(loss))
+        return loss
 
     def get_training_data(self):
         training_data = []

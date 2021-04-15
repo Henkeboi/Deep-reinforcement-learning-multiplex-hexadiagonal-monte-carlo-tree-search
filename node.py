@@ -55,7 +55,7 @@ class Node:
                 children.append(child[0])
             return children, True
 
-    def get_Q(self, player1_to_move):
+    def get_val(self, player1_to_move):
         if self.num_traversed == 0:
             if player1_to_move:
                 return np.inf
@@ -64,5 +64,5 @@ class Node:
         else:
             return self.Q
 
-    def update_Q(self, value):
+    def update_val(self, value):
         self.Q = self.Q + value
